@@ -4,6 +4,7 @@
    :asdf
    #:coerce-name
    #:component-name
+   #:component-pathname
    #:find-system
    #:system-depends-on
    #:system-weakly-depends-on
@@ -22,7 +23,7 @@
   (prog2
       (asdf:load-asd pathname :name name)
       (find-system name)
-    (in-package :cl2nix)))
+    (in-package :cl2nix/dep)))
 
 (defun inferred-system-p (system)
   (case (class-name (class-of system))
@@ -33,21 +34,22 @@
   (eql 0 (search (format nil "~A/" system-name) component-name)))
 
 (defun inferred-dependencies (system depends-on)
-  (let ((system-name (component-name system))
-        (src (asdf:system-source-directory system)))
-    (flet ((system-component-p (component)
-             (inferred-system-component-p system-name component)))
-      (if (not (member t (mapcar #'system-component-p depends-on)))
-          depends-on
-          (let ((depends-no-inferred (remove-if #'system-component-p depends-on))
-                (inferred (apply #'append
-                                 (loop :for dependency :in depends-on
-                                       :collect (when (system-component-p dependency)
-                                                  (asdf/package-inferred-system::package-inferred-system-file-dependencies
-                                                   (format nil "~A~A.lisp"
-                                                           src
-                                                           (subseq dependency (1+ (length system-name))))))))))
-            (inferred-dependencies system (append depends-no-inferred inferred)))))))
+  (uiop:nest
+   (let ((system-name (component-name system))
+         (src (component-pathname system))))
+   (flet ((system-component-p (component)
+            (inferred-system-component-p system-name component))))
+   (if (not (member t (mapcar #'system-component-p depends-on)))
+       depends-on)
+   (let ((depends-no-inferred (remove-if #'system-component-p depends-on))
+         (inferred (apply #'append
+                          (loop :for dependency :in depends-on
+                                :collect (when (system-component-p dependency)
+                                           (uiop:nest
+                                            (asdf/package-inferred-system::package-inferred-system-file-dependencies)
+                                            (format nil "~A~A.lisp" src)
+                                            (subseq dependency (1+ (length system-name)))))))))
+     (inferred-dependencies system (append depends-no-inferred inferred)))))
 
 (defun normalize-version (version-string)
   (format nil "_~A" (substitute #\_ #\. version-string)))
@@ -73,26 +75,30 @@
          (inferred-dependencies (when (inferred-system-p system)
                                   (inferred-dependencies system
                                                          direct-dependencies))))
-    (dedup-append #'string-equal
-                  (remove-if #'(lambda (dependency-name)
-                                 (or (null dependency-name)
-                                     (when (inferred-system-p system)
-                                       (inferred-system-component-p system-name dependency-name))))
-                             (mapcar #'parse-specifier
-                                     (append defsystem-dependencies
-                                             weak-dependencies
-                                             direct-dependencies
-                                             inferred-dependencies))))))
+    (uiop:nest
+     (dedup-append #'string-equal)
+     (remove-if #'(lambda (dependency-name)
+                    (or (null dependency-name)
+                        (when (inferred-system-p system)
+                          (inferred-system-component-p system-name dependency-name)))))
+     (mapcar #'parse-specifier
+             (append defsystem-dependencies
+                     weak-dependencies
+                     direct-dependencies
+                     inferred-dependencies)))))
 
 (defun describe-system (system)
   (let ((name (component-name system))
+        (path (component-pathname system))
         (version (asdf:component-version system)))
     (format t "name: ~A
+path: ~A
 version: ~A
 qualified-name: ~A
 dependencies: ~S
 "
             name
+            path
             version
             (format nil "~A~A" name (normalize-version version))
             (system-dependencies system))))
