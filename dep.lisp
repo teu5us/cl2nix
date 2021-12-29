@@ -96,30 +96,3 @@ dependencies: ~S
             version
             (format nil "~A~A" name (normalize-version version))
             (system-dependencies system))))
-
-(in-package :asdf/find-system)
-
-(defun load-asd (pathname &key name)
-  "Load system definitions from PATHNAME.
-NAME if supplied is the name of a system expected to be defined in that file.
-
-Do NOT try to load a .asd file directly with CL:LOAD. Always use ASDF:LOAD-ASD."
-  (with-asdf-session ()
-    ;; TODO: use OPERATE, so we consult the cache and only load once per session.
-    (flet ((do-it (o c) (operate o c)))
-      (let ((primary-name (primary-system-name (or name (pathname-name pathname))))
-            (operation (make-operation 'define-op)))
-        (if-let (system (registered-system primary-name))
-          (progn
-            ;; We already determine this to be obsolete ---
-            ;; or should we move some tests from find-system to check for up-to-date-ness here?
-            (setf (component-operation-time operation system) t
-                  (definition-dependency-list system) nil
-                  (definition-dependency-set system) (list-to-hash-set nil))
-            (do-it operation system))
-          (let ((system (make-instance 'undefined-system
-                                       :name primary-name :source-file pathname)))
-            (register-system system)
-            (unwind-protect (do-it operation system)
-              (when (typep system 'undefined-system)
-                (clear-system system)))))))))
