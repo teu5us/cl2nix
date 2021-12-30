@@ -1,7 +1,12 @@
 (defpackage :cl2nix/src
   (:use
    #:common-lisp
-   #:cl2nix/util))
+   #:cl2nix/util)
+  (:export
+   #:source #:git-source #:branched-git-source #:url-source
+   #:mercurial-source #:svn-source #:darcs-source
+   #:source-name #:location #:git-source-branch
+   #:latest-release-git-source #:latest-branch))
 
 (in-package :cl2nix/src)
 
