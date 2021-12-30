@@ -78,6 +78,19 @@
 (defun make-source (class name &rest slots)
   (apply #'make-instance class :name name slots))
 
+(defun name-from-link (link)
+  (uiop:nest
+   (car)
+   (last)
+   (split-on-slash)
+   (trim-end "/")
+   (trim-end ".git")
+   (trim-end ".tar.gz")
+   (trim-end ".tgz")
+   (trim-end ".zip")
+   (trim-end "/trunk")
+   link))
+
 (defvar *source-classes*
   '(("git" . git-source)
     ("branched-git" . branched-git-source)
@@ -98,9 +111,10 @@
   (cdr (assoc type *source-classes* :test #'string-equal)))
 
 (defun read-source (str)
-  (destructuring-bind (name type link &rest args)
+  (destructuring-bind (type link &rest args)
       (split-on-space str)
-    (let ((class (assoc-source-type type)))
+    (let ((class (assoc-source-type type))
+          (name (name-from-link link)))
       (apply #'make-source
              class
              `(,name
