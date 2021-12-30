@@ -6,7 +6,8 @@
    #:source #:git-source #:branched-git-source #:url-source
    #:mercurial-source #:svn-source #:darcs-source
    #:source-name #:location #:git-source-branch
-   #:latest-release-git-source #:latest-branch))
+   #:latest-release-git-source #:latest-branch
+   #:read-source))
 
 (in-package :cl2nix/src)
 
