@@ -1,0 +1,7 @@
+#!/bin/sh
+
+owner="$1"
+repo="$2"
+
+curl -sL "https://api.github.com/repos/$owner/$repo/tags" \
+    | jq --raw-output '.[0].name'
