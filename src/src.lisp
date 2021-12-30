@@ -12,9 +12,11 @@
                  (= 0 (length str)))
              (uiop:read-file-lines file)))
 
-(defun clear-dot-git (url)
-  (let ((dot-git (search ".git" url :from-end t :test #'string=)))
-    (when dot-git (subseq url 0 dot-git))))
+(defun trim-end (end str)
+  (let ((end-position (search end str :from-end t :test #'string=)))
+    (if (= (length str) (+ end-position (length end)))
+        (subseq str 0 end-position)
+        str)))
 
 ; source definitions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
