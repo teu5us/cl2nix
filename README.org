@@ -1,0 +1,65 @@
+* CL2NIX
+CL2NIX is a tool to assist in maintaining Common Lisp in Nix.
+* Motivation
+Currently (December, 2021), the support for Common Lisp in Nixpkgs is far from
+perfect:
+
+1. Quicklisp is used. I do like Quicklisp and I am very thankful to its creator
+   for making Common Lisp system distribution easy and maintaining the dist.
+   However, in the case of Nix, we already have a package manager.
+2. Generating dists with Quicklisp can interfere with local Quicklisp
+   installation.
+3. The generator tool only works inside of a nix-shell, providing build
+   dependencies for the systems being checked. Do we actually have to build
+   everything before resolving lisp dependencies? We will find out later.
+4. Adding new lisp systems to Nixpkgs is unintuitive. Nix-shells make this
+   worse, when there is a system missing from Nixpkgs, because we are forced to
+   define lisp dependencies by hand if they are missing as well.
+5. Lisp compilers miss the ~withPackages~ option, that, for example, GHC and
+   Python have. Every lisp system is isolated in the store and collected for the
+   compiler by the clwrapper script. As it seems to me, this breaks the rules
+   that exist for other languages.
+* Goals
+1. CL2NIX should only depend on ASDF.
+2. CL2NIX should be able to:
+   1. Generate a package expression:
+      1. Read a system description in [[https://github.com/quicklisp/quicklisp-projects][quicklisp-projects format]]
+      2. Prefetch the system, save its URL, revision and sha256 sum
+      3. Find the system's .asd files, read them, extract the defined system names and
+         lisp dependencies for each system
+      4. Use the gathered information information to generate a lisp package
+         expression for Nix
+   2. Generate an attrset for lisp packages:
+      1. Read a list of system descriptions in [[https://github.com/quicklisp/quicklisp-projects][quicklisp-projects format]]
+      2. Check that lisp dependencies are satisfied, warn if not and log the
+         missing systems
+      3. Generate and collect expressions, then save to a file
+
+The nix expression should allow for overrides to provide external build- and
+runtime dependencies. If an attrset is created, overrides are written by hand in
+[[https://github.com/NixOS/nixpkgs/blob/a0dbe47318bbab7559ffbfa7c4872a517833409f/pkgs/development/lisp-modules/quicklisp-to-nix-overrides.nix][quicklisp-to-nix-overrides.nix]] manner.
+
+New wrapers should be written to allow for intuitive lisp usage with Nix
+(~withPackages~). Hopefully, we will be able to reuse the compiler definitions
+from Nixpkgs. It may also be viable to create different attrsets for different
+compilers.
+
+Broken lisp packages should be marked.
+* Other ways to run Common Lisp with Nix(OS) that I tried
+1. Quicklisp:
+   - Familiar
+   - Nix-shells still need to be written (for Roswell also)
+2. Roswell:
+   - Familiar
+   - Not really sure if .ros scripts work right
+   - The installation process is unreliable. For me manually changing the config
+     file worked on one machine, but on the other one it was resetting
+3. [[https://github.com/SquircleSpace/ql2nix][Ql2nix]]:
+   - Builds an environment with lisp systems, which are not isolated
+   - When I tried it, there were systems that it could not build
+   - Minor changes in nix-shell required to rebuild the entire environment
+
+   I did not track the project for quite some time, things may have changed.
+4. [[https://github.com/teu5us/cl-nix-project-skeleton][cl-nix-project-skeleton]] was my attempt to reuse the facilities available in
+   Nixpkgs to build a nix-shell. It is a mess, but it gave me some
+   insights
