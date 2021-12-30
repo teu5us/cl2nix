@@ -7,6 +7,7 @@ Version used: ~A" (asdf:asdf-version))
   :author "Pavel Stepanov"
   :mailto "<paulkreuzmann@gmail.com>"
   :description "CL2NIX is a tool to assist in maintaining Common Lisp in Nix."
+  :pathname "src"
   :class :package-inferred-system
   :defsystem-depends-on ("asdf-package-system")
   :depends-on ("cl2nix/dep"
