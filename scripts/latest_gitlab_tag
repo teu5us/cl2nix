@@ -3,5 +3,7 @@
 owner="$1"
 repo="$2"
 
-curl -sL "https://gitlab.com/api/v4/projects/$owner%2F$repo/repository/tags" \
-    | jq --raw-output '.[0].release.tag_name'
+tag=$(curl -sL "https://gitlab.com/api/v4/projects/$owner%2F$repo/repository/tags" \
+    | jq --raw-output '.[0].release.tag_name')
+
+echo -n $tag
