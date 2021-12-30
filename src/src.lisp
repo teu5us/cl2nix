@@ -36,10 +36,8 @@
 
 ; git sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defclass git-source (templated-source)
-  ()
-  (:default-initargs
-   :location-template "~A"))
+(defclass git-source (source)
+  ())
 
 (defclass branched-git-source (git-source)
   ((branch :initarg :branch
@@ -48,12 +46,12 @@
 (defclass tagged-git-source (branched-git-source)
   ())
 
-(defclass kmr-git-source (git-source)
+(defclass kmr-git-source (templated-source)
   ()
   (:default-initargs
    :location-template "http://git.kpe.io/~A.git"))
 
-(defclass ediware-git-source (git-source)
+(defclass ediware-git-source (templated-source)
   ()
   (:default-initargs
    :location-template "https://github.com/edicl/~A.git"))
@@ -61,9 +59,7 @@
 ; url sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass url-source (source)
-  ()
-  (:default-initargs
-   :location-template "~A"))
+  ())
 
 (defclass mercurial-source (url-source)
   ())
@@ -73,6 +69,11 @@
 
 (defclass darcs-source (url-source)
   ())
+
+; create sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun make-source (class name &rest slots)
+  (apply #'make-instance class :name name slots))
 
 (defvar *source-classes*
   '(("git" . git-source)
@@ -91,4 +92,16 @@
     ("https" . url-source)))
 
 (defun assoc-source-type (type)
-  (assoc type *source-types* :test #'string-equal))
+  (cdr (assoc type *source-classes* :test #'string-equal)))
+
+(defun read-source (str)
+  (destructuring-bind (name type link &rest args)
+      (split-on-space str)
+    (let ((class (assoc-source-type type)))
+      (apply #'make-source
+             class
+             `(,name
+               ,@(unless (subtypep class 'templated-source)
+                   (list :location link))
+               ,@(when args
+                   (cons :branch args)))))))
