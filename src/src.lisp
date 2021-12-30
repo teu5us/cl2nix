@@ -51,6 +51,20 @@
 (defclass tagged-git-source (branched-git-source)
   ())
 
+(defclass latest-release-git-source (branched-git-source)
+  ((script :initarg :script
+           :accessor script)))
+
+(defclass latest-github-release-source (latest-release-git-source)
+  ()
+  (:default-initargs
+   :script "../scripts/latest_github_release"))
+
+(defclass latest-gitlab-release-source (latest-release-git-source)
+  ()
+  (:default-initargs
+   :script "../scripts/latest_gitlab_release"))
+
 (defclass kmr-git-source (git-source)
   ()
   (:default-initargs
@@ -60,6 +74,13 @@
   ()
   (:default-initargs
    :location-template "https://github.com/edicl/~A.git"))
+
+(defmethod latest-branch ((source latest-release-git-source))
+  (let* ((split (split-on-slash (trim-end ".git" (location source))))
+         (owner (fourth split))
+         (repo (fifth split)))
+    (uiop:run-program (list (script source) owner repo)
+                      :output :string)))
 
 ; url sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -98,9 +119,9 @@
     ("branched-git" . branched-git-source)
     ("tagged-git" . tagged-git-source)
     ("kmr-git" . kmr-git-source)
-    ("latest-github-release" . tagged-git-source)
-    ("latest-gitlab-release" . tagged-git-source)
-    ("latest-github-tag" . tagged-git-source)
+    ("latest-github-release" . latest-github-release-source)
+    ("latest-gitlab-release" . latest-gitlab-release-source)
+    ("latest-github-tag" . latest-gitlab-release-source)
     ("ediware-http" . ediware-git-source)
     ("darcs" . darcs-source)
     ("svn" . svn-source)
