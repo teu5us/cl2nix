@@ -8,9 +8,11 @@
 ; utility ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun read-source-list (file)
-  (remove-if #'(lambda (str)
-                 (= 0 (length str)))
-             (uiop:read-file-lines file)))
+  (mapcar #'(lambda (str)
+              (string-trim '(#\Space) str))
+          (remove-if #'(lambda (str)
+                         (= 0 (length str)))
+                     (uiop:read-file-lines file))))
 
 (defun trim-end (end str)
   (let ((end-position (search end str :from-end t :test #'string=)))
