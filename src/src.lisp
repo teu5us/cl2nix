@@ -14,7 +14,8 @@
 
 (defun trim-end (end str)
   (let ((end-position (search end str :from-end t :test #'string=)))
-    (if (= (length str) (+ end-position (length end)))
+    (if (and end-position
+             (= (length str) (+ end-position (length end))))
         (subseq str 0 end-position)
         str)))
 
