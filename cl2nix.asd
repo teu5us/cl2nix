@@ -12,4 +12,5 @@ Version used: ~A" (asdf:asdf-version))
   :defsystem-depends-on ("asdf-package-system")
   :depends-on ("cl2nix/dep"
                "cl2nix/src"
-               "cl2nix/nix-prefetch"))
+               "cl2nix/nix-prefetch"
+               "cl2nix/util"))

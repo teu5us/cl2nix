@@ -1,5 +1,7 @@
 (defpackage :cl2nix/src
-  (:use #:common-lisp))
+  (:use
+   #:common-lisp
+   #:cl2nix/util))
 
 (in-package :cl2nix/src)
 
@@ -10,19 +12,11 @@
                  (= 0 (length str)))
              (uiop:read-file-lines file)))
 
-(defun split-string-on-space (str)
-  (let ((space (position #\Space str :test #'char=)))
-    (if space
-        (let ((first (when space (subseq str 0 space)))
-              (rest (when space (subseq str (1+ space)))))
-          (cons first (split-string-on-space rest)))
-        (list str))))
-
 (defun clear-dot-git (url)
   (let ((dot-git (search ".git" url :from-end t :test #'string=)))
     (when dot-git (subseq url 0 dot-git))))
 
-; source definitions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; source definitions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass source ()
   ((name :initarg :name
@@ -34,8 +28,13 @@
   ((location-template :initarg :location-template
                       :accessor location-template)))
 
+(defmethod location ((source source))
+  (source-location source))
+
 (defmethod location ((source templated-source))
   (format nil (location-template source) (source-name source)))
+
+; git sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass git-source (templated-source)
   ()
@@ -44,38 +43,52 @@
 
 (defclass branched-git-source (git-source)
   ((branch :initarg :branch
-           :accessor source-branch)))
+           :accessor git-source-branch)))
 
-(defclass tagged-git-source (git-source)
+(defclass tagged-git-source (branched-git-source)
+  ())
+
+(defclass kmr-git-source (git-source)
+  ()
+  (:default-initargs
+   :location-template "http://git.kpe.io/~A.git"))
+
+(defclass ediware-git-source (git-source)
+  ()
+  (:default-initargs
+   :location-template "https://github.com/edicl/~A.git"))
+
+; url sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defclass url-source (source)
   ()
   (:default-initargs
    :location-template "~A"))
 
-(defun branched-git (source)
-  (destructuring-bind (url branch) source
-    (list :url url :branch branch)))
+(defclass mercurial-source (url-source)
+  ())
 
-(defvar *source-types*
-  '(("branched-git" . #'branched-git)
-    ("kmr-git")
-    ("latest-github-release")
-    ("latest-gitlab-release")
-    ("latest-github-tag")
-    ("darcs")
-    ("svn")
-    ("single-file")
-    ("mercurial")
-    ("tagged-git")
-    ("ediware-http")
-    ("http")
-    ("https")
-    ("git")))
+(defclass svn-source (url-source)
+  ())
+
+(defclass darcs-source (url-source)
+  ())
+
+(defvar *source-classes*
+  '(("git" . git-source)
+    ("branched-git" . branched-git-source)
+    ("tagged-git" . tagged-git-source)
+    ("kmr-git" . kmr-git-source)
+    ("latest-github-release" . tagged-git-source)
+    ("latest-gitlab-release" . tagged-git-source)
+    ("latest-github-tag" . tagged-git-source)
+    ("ediware-http" . ediware-git-source)
+    ("darcs" . darcs-source)
+    ("svn" . svn-source)
+    ("mercurial" . mercurial-source)
+    ("single-file" . url-source)
+    ("http" . url-source)
+    ("https" . url-source)))
 
 (defun assoc-source-type (type)
   (assoc type *source-types* :test #'string-equal))
-
-;; (defun define-source (source-spec)
-;;   (let* ((spec (split-string-on-space source-spec))
-;;          (type (car spec)))
-;;     (unless (member type *source-types* :test #'string-equal)
-;;       nil)))
