@@ -51,12 +51,12 @@
 (defclass tagged-git-source (branched-git-source)
   ())
 
-(defclass kmr-git-source (templated-source)
+(defclass kmr-git-source (git-source)
   ()
   (:default-initargs
    :location-template "http://git.kpe.io/~A.git"))
 
-(defclass ediware-git-source (templated-source)
+(defclass ediware-git-source (git-source)
   ()
   (:default-initargs
    :location-template "https://github.com/edicl/~A.git"))
