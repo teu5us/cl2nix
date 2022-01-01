@@ -3,7 +3,8 @@
   (:export
    #:split-on-space
    #:split-on-slash
-   #:split-on))
+   #:split-on
+   #:ends-with))
 
 (in-package :cl2nix/util)
 
@@ -15,3 +16,10 @@
 
 (defun split-on-slash (str)
   (split-on str #\/))
+
+(defun ends-with (end str)
+  (let ((end-position (search end str :from-end t :test #'string=)))
+    (values
+     (and end-position
+          (= (length str) (+ end-position (length end))))
+     end-position)))

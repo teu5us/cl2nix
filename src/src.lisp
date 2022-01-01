@@ -21,9 +21,9 @@
                      (uiop:read-file-lines file))))
 
 (defun trim-end (end str)
-  (let ((end-position (search end str :from-end t :test #'string=)))
-    (if (and end-position
-             (= (length str) (+ end-position (length end))))
+  (multiple-value-bind (ends-with end-position)
+      (ends-with end str)
+    (if ends-with
         (subseq str 0 end-position)
         str)))
 
