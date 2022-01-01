@@ -11,19 +11,27 @@
    #:system-defsystem-depends-on)
   (:import-from
    :asdf/component
-   #:component-name))
+   #:component-name)
+  (:export
+   #:load-system
+   #:system-dependencies
+   #:describe-system))
 
 (in-package :cl2nix/dep)
 
 (defun dedup-append (pred &rest lists)
   (remove-duplicates (apply #'append lists) :test pred))
 
-(defun load-system (pathname name)
-  (in-package :cl-user)
-  (prog2
-      (asdf:load-asd pathname :name name)
-      (find-system name)
-    (in-package :cl2nix/dep)))
+;; (defmacro with-package (package return-to &body forms)
+;;   `(prog2
+;;        (in-package ,package)
+;;        (progn ,@forms)
+;;      (in-package ,return-to)))
+
+(defun load-system (pathname &key name)
+  (progn
+    (asdf:load-asd pathname :name name)
+    (find-system name)))
 
 (defun inferred-system-p (system)
   (case (class-name (class-of system))
@@ -88,17 +96,8 @@
                      inferred-dependencies)))))
 
 (defun describe-system (system)
-  (let ((name (component-name system))
-        (path (component-pathname system))
-        (version (asdf:component-version system)))
-    (format t "name: ~A
-path: ~A
-version: ~A
-qualified-name: ~A
-dependencies: ~S
-"
-            name
-            path
-            version
-            (format nil "~A~A" name (normalize-version version))
-            (system-dependencies system))))
+  (list :pname (component-name system)
+        :version (asdf:component-version system)
+        :path (component-pathname system)
+        :description (asdf/component:component-description system)
+        :dependencies (system-dependencies system)))
