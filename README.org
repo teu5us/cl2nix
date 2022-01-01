@@ -63,3 +63,6 @@ Broken lisp packages should be marked.
 4. [[https://github.com/teu5us/cl-nix-project-skeleton][cl-nix-project-skeleton]] was my attempt to reuse the facilities available in
    Nixpkgs to build a nix-shell. It is a mess, but it gave me some
    insights
+
+* Source descriptions
+Apparently some descriptions in the quicklisp-projects repository are outdated, so check also [[https://github.com/cldm/cldm-repo][cldm-repo]].
