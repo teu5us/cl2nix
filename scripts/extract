@@ -6,10 +6,7 @@ case "$1" in
     *.tar.gz | *.tgz) tar xzf "$1" -C "$tmpDir" ;;
     *.tar.xz) tar xJf "$1" -C "$tmpDIr" ;;
     *.zip) unzip "$1" -d "$tmpDir" ;;
-    *)
-        echo -n "$1"
-        exit
-        ;;
+    *) ln -sf "$1"/* "$tmpDir"/ ;;
 esac
 
 echo -n "$tmpDir"
