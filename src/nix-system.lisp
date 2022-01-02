@@ -15,6 +15,10 @@
           :accessor pname)
    (version :initarg :version
             :accessor version)
+   (fetcher :initarg :fetcher
+            :accessor fetcher)
+   (url :initarg :url
+        :accessor url)
    (sha256 :initarg :sha256
            :accessor sha256)
    (rev :initarg :rev
@@ -22,14 +26,19 @@
    (dependencies :initarg :dependencies
                  :accessor dependencies)))
 
-(defun asds (directory)
+(defun extract (path)
+  (uiop:run-program (list "../scripts/extract"
+                          (namestring path))
+                    :output :string))
+
+(defun asds (path)
   (remove-if-not #'(lambda (str)
                      (ends-with ".asd" str))
                  (uiop:nest
                   (mapcar #'namestring)
                   (apply #'append
-                         (uiop:directory-files directory))
-                  (loop :for dir :in (uiop:subdirectories directory)
+                         (uiop:directory-files path))
+                  (loop :for dir :in (uiop:subdirectories path)
                         :collect (uiop:directory-files dir)))))
 
 (defun asd-system-names (asd)
@@ -54,9 +63,14 @@
 
 (defun systems-from-source (src-desc)
   (let* ((source (read-source src-desc))
-         (prefetch (nix-prefetch source))
-         (path (getf prefetch :path)))
-    (let* ((asds (asds (truename path))))
-      (apply #'append
-             (loop :for asd :in asds
-                   :collect (asd-systems asd prefetch))))))
+         (prefetch-result (nix-prefetch source))
+         (path (getf prefetch-result :path))
+         (extracted-path (truename (extract (namestring path)))))
+    (let* ((asds (asds extracted-path)))
+      (prog1
+          (apply #'append
+                 (loop :for asd :in asds
+                       :collect (asd-systems asd prefetch-result)))
+        (uiop:delete-directory-tree extracted-path
+                                    :validate t
+                                    :if-does-not-exist :ignore)))))

@@ -48,13 +48,14 @@ OR
 
 ; prefetchers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; fix "warning: unknown setting..."
 (defun run-nix-prefetch (program &rest args)
   (prog2
       (progn
         (setenv "QUIET" "1")
         (setenv "PRINT_PATH" "1"))
       (with-output-to-string (s)
-        (uiop:run-program `(,program ,@args) :output s :error-output s)
+        (uiop:run-program `(,program ,@args) :output s)
         s)
       (progn
         (setenv "QUIET" "0")
@@ -81,25 +82,35 @@ Returns a plist with three keys.
 :sha256 => The sha of the fetched file
 :path => The path to the file in the nix store"))
 
+;; (defmethod nix-prefetch ((source url-source))
+;;   (run-simple-nix-prefetch "nix-prefetch-url"
+;;                            (location source)
+;;                            '(:sha256 :path)))
+
+;; (defmethod nix-prefetch ((source mercurial-source))
+;;   (run-simple-nix-prefetch "nix-prefetch-hg"
+;;                            (location source)
+;;                            '(:rev :sha256 :path)))
+
+;; (defmethod nix-prefetch ((source darcs-source))
+;;   (run-simple-nix-prefetch "nix-prefetch-darcs"
+;;                            (location source)
+;;                            '(:rev :sha256 :path)))
+
+;; (defmethod nix-prefetch ((source svn-source))
+;;   (run-simple-nix-prefetch "nix-prefetch-svn"
+;;                            (location source)
+;;                            '(:rev :sha256 :path)))
+
+(defmethod nix-prefetch ((source source))
+  (run-simple-nix-prefetch (source-prefetch source)
+                           (location source)
+                           '(:rev :sha256 :path)))
+
 (defmethod nix-prefetch ((source url-source))
-  (run-simple-nix-prefetch "nix-prefetch-url"
+  (run-simple-nix-prefetch (source-prefetch source)
                            (location source)
                            '(:sha256 :path)))
-
-(defmethod nix-prefetch ((source mercurial-source))
-  (run-simple-nix-prefetch "nix-prefetch-hg"
-                           (location source)
-                           '(:rev :sha256 :path)))
-
-(defmethod nix-prefetch ((source darcs-source))
-  (run-simple-nix-prefetch "nix-prefetch-darcs"
-                           (location source)
-                           '(:rev :sha256 :path)))
-
-(defmethod nix-prefetch ((source svn-source))
-  (run-simple-nix-prefetch "nix-prefetch-svn"
-                           (location source)
-                           '(:rev :sha256 :path)))
 
 (defmethod nix-prefetch ((source git-source))
   (run-git-nix-prefetch (location source)))
@@ -109,3 +120,8 @@ Returns a plist with three keys.
 
 (defmethod nix-prefetch ((source latest-release-git-source))
   (run-git-nix-prefetch (location source) "--branch-name" (latest-branch source)))
+
+(defmethod nix-prefetch :around ((source source))
+  `(:fetch ,(source-fetch source)
+    :url ,(location source)
+    ,@(call-next-method)))

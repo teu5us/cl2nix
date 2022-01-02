@@ -7,7 +7,9 @@
    #:mercurial-source #:svn-source #:darcs-source
    #:source-name #:location #:git-source-branch
    #:latest-release-git-source #:latest-branch
-   #:read-source))
+   #:read-source
+   #:source-fetch
+   #:source-prefetch))
 
 (in-package :cl2nix/src)
 
@@ -32,6 +34,10 @@
 (defclass source ()
   ((name :initarg :name
          :accessor source-name)
+   (fetch :initarg :fetch
+          :reader source-fetch)
+   (prefetch :initarg :prefetch
+             :reader source-prefetch)
    (location :initarg :location
              :accessor source-location)))
 
@@ -48,7 +54,10 @@
 ; git sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass git-source (source)
-  ())
+  ()
+  (:default-initargs
+   :prefetch "nix-prefetch-git"
+   :fetch "fetchgit"))
 
 (defclass branched-git-source (git-source)
   ((branch :initarg :branch
@@ -64,12 +73,12 @@
 (defclass latest-github-release-source (latest-release-git-source)
   ()
   (:default-initargs
-   :script "../scripts/latest_github_release"))
+   :script "../scripts/latest_github_tag"))
 
 (defclass latest-gitlab-release-source (latest-release-git-source)
   ()
   (:default-initargs
-   :script "../scripts/latest_gitlab_release"))
+   :script "../scripts/latest_gitlab_tag"))
 
 (defclass kmr-git-source (git-source)
   ()
@@ -91,16 +100,28 @@
 ; url sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass url-source (source)
-  ())
+  ()
+  (:default-initargs
+   :prefetch "nix-prefetch-url"
+   :fetch "fetchurl"))
 
-(defclass mercurial-source (url-source)
-  ())
+(defclass mercurial-source (source)
+  ()
+  (:default-initargs
+   :prefetch "../scripts/nix-prefetch-hg"
+   :fetch "fetchhg"))
 
-(defclass svn-source (url-source)
-  ())
+(defclass svn-source (source)
+  ()
+  (:default-initargs
+   :prefetch "../scripts/nix-prefetch-svn"
+   :fetch "fetchsvn"))
 
-(defclass darcs-source (url-source)
-  ())
+(defclass darcs-source (source)
+  ()
+  (:default-initargs
+   :prefetch "nix-prefetch-darcs"
+   :fetch "fetchdarcs"))
 
 ; create sources ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
