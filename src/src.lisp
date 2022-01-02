@@ -59,6 +59,9 @@
    :prefetch "nix-prefetch-git"
    :fetch "fetchgit"))
 
+(defclass templated-git-source (git-source templated-source)
+  ())
+
 (defclass branched-git-source (git-source)
   ((branch :initarg :branch
            :accessor git-source-branch)))
@@ -80,12 +83,12 @@
   (:default-initargs
    :script "../scripts/latest_gitlab_tag"))
 
-(defclass kmr-git-source (git-source)
+(defclass kmr-git-source (templated-git-source)
   ()
   (:default-initargs
    :location-template "http://git.kpe.io/~A.git"))
 
-(defclass ediware-git-source (git-source)
+(defclass ediware-git-source (templated-git-source)
   ()
   (:default-initargs
    :location-template "https://github.com/edicl/~A.git"))
