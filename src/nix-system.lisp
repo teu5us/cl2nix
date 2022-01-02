@@ -53,6 +53,8 @@
     (make-instance 'nix-system
                    :pname (getf d :pname)
                    :version (getf d :version)
+                   :fetcher (getf prefetch :fetch)
+                   :url (getf prefetch :url)
                    :sha256 (getf prefetch :sha256)
                    :rev (getf prefetch :rev)
                    :dependencies (getf d :dependencies))))
