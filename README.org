@@ -66,3 +66,10 @@ Broken lisp packages should be marked.
 
 * Source descriptions
 Apparently some descriptions in the quicklisp-projects repository are outdated, so check also [[https://github.com/cldm/cldm-repo][cldm-repo]].
+
+* Single-file libraries
+Output paths should be collected and put into an environment variable (~NIX_SINGLE_FILE_SYSTEMS~).
+
+Lisp compiler needs to get a function to find single-file libraries through ~NIX_SINGLE_FILE_SYSTEMS~. The function symbol is put into ~*MODULE-PROVIDER-FUNCTIONS*~.
+
+This is not required for ASDF systems, as those are already managed by ASDF and ~CL_SOURCE_REGISTRY~.
