@@ -27,7 +27,7 @@ perfect:
       2. Prefetch the system, save its URL, revision and sha256 sum
       3. Find the system's .asd files, read them, extract the defined system names and
          lisp dependencies for each system
-      4. Use the gathered information information to generate a lisp package
+      4. Use the gathered information to generate a lisp package
          expression for Nix
    2. Generate an attrset for lisp packages:
       1. Read a list of system descriptions in [[https://github.com/quicklisp/quicklisp-projects][quicklisp-projects format]]
@@ -39,7 +39,7 @@ The nix expression should allow for overrides to provide external build- and
 runtime dependencies. If an attrset is created, overrides are written by hand in
 [[https://github.com/NixOS/nixpkgs/blob/a0dbe47318bbab7559ffbfa7c4872a517833409f/pkgs/development/lisp-modules/quicklisp-to-nix-overrides.nix][quicklisp-to-nix-overrides.nix]] manner.
 
-New wrapers should be written to allow for intuitive lisp usage with Nix
+New wrappers should be written to allow for intuitive lisp usage with Nix
 (~withPackages~). Hopefully, we will be able to reuse the compiler definitions
 from Nixpkgs. It may also be viable to create different attrsets for different
 compilers.
