@@ -14,4 +14,6 @@ Version used: ~A" (asdf:asdf-version))
                "cl2nix/src"
                "cl2nix/nix-prefetch"
                "cl2nix/util"
-               "cl2nix/nix-system"))
+               ;; "cl2nix/nix-system"
+               "cl2nix/source-list"
+               ))
