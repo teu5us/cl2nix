@@ -15,5 +15,6 @@ Version used: ~A" (asdf:asdf-version))
                "cl2nix/nix-prefetch"
                "cl2nix/util"
                "cl2nix/nix-system"
-               "cl2nix/source-list")
+               "cl2nix/source-list"
+               "cl2nix/log")
   :components ((:file "cl2nix")))
