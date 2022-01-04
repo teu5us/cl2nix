@@ -16,14 +16,28 @@
             :accessor version)
    (fetcher :initarg :fetcher
             :accessor fetcher)
-   (url :initarg :url
-        :accessor url)
-   (sha256 :initarg :sha256
-           :accessor sha256)
-   (rev :initarg :rev
-        :accessor rev)
+   (src :initarg :src
+        :accessor src)
+   ;; (url :initarg :url
+   ;;      :accessor url)
+   ;; (sha256 :initarg :sha256
+   ;;         :accessor sha256)
+   ;; (rev :initarg :rev
+   ;;      :accessor rev)
    (dependencies :initarg :dependencies
                  :accessor dependencies)))
+
+(defmethod print-object ((object nix-system) stream)
+  (print-unreadable-object (object stream :type t)
+    (with-slots (pname version fetcher src dependencies) object
+      (format stream "
+~:Tpname = ~S
+~:Tversion = ~S
+~:Tfetcher = ~S
+~:Tsrc = ~S
+~:Tdependencies = ~S
+~:T" pname version fetcher src dependencies))))
+
 
 (defun extract (path)
   (uiop:run-program
@@ -43,21 +57,22 @@
 
 (defun asd-system-names (asd)
   (loop :for form :in (uiop:read-file-forms asd)
-        :when (or (eql 'defsystem (car form))
-                  (eql 'asdf:defsystem (car form)))
+        :when (or (eql (find-symbol "DEFSYSTEM") (car form))
+                  (eql (find-symbol "DEFSYSTEM" :asdf) (car form)))
           :collect (cadr form)))
 
 (defun asd-system (system-name asd prefetch)
   (let* ((system (load-system asd :name system-name))
-         (d (describe-system system)))
+         (source (prefetch-source prefetch)))
     (make-instance 'nix-system
-                   :pname (getf d :pname)
-                   :version (getf d :version)
-                   :fetcher (getf prefetch :fetch)
-                   :url (getf prefetch :url)
-                   :sha256 (getf prefetch :sha256)
-                   :rev (getf prefetch :rev)
-                   :dependencies (getf d :dependencies))))
+                   :pname (asdf:component-name system) ;; component-name
+                   :version (asdf:component-version system) ;; component-version
+                   :fetcher (source-fetch source)
+                   :src (list
+                         :url (location source)
+                         :sha256 (prefetch-sha256 prefetch)
+                         :rev (prefetch-rev prefetch))
+                   :dependencies (system-dependencies system))))
 
 (defun asd-systems (asd prefetch)
   (loop :for system-name :in (asd-system-names asd)
@@ -66,7 +81,7 @@
 (defun systems-from-source (src-desc)
   (let* ((source (read-source src-desc))
          (prefetch-result (nix-prefetch source))
-         (path (getf prefetch-result :path))
+         (path (prefetch-path prefetch-result))
          (extracted-path (truename (extract (namestring path)))))
     (let* ((asds (asds extracted-path)))
       (prog1

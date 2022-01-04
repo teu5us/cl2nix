@@ -14,8 +14,7 @@
    #:component-name)
   (:export
    #:load-system
-   #:system-dependencies
-   #:describe-system))
+   #:system-dependencies))
 
 (in-package :cl2nix/dep)
 
@@ -94,11 +93,3 @@
                      weak-dependencies
                      direct-dependencies
                      inferred-dependencies)))))
-
-(defun describe-system (system)
-  (list :pname (component-name system)
-        :author (asdf:system-author system)
-        :version (asdf:component-version system)
-        :path (component-pathname system)
-        :description (asdf/component:component-description system)
-        :dependencies (system-dependencies system)))
