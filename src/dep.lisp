@@ -1,17 +1,5 @@
 (defpackage :cl2nix/dep
   (:use #:common-lisp)
-  (:import-from
-   :asdf
-   #:coerce-name
-   #:component-name
-   #:component-pathname
-   #:find-system
-   #:system-depends-on
-   #:system-weakly-depends-on
-   #:system-defsystem-depends-on)
-  (:import-from
-   :asdf/component
-   #:component-name)
   (:export
    #:load-system
    #:system-dependencies))
@@ -30,7 +18,7 @@
 (defun load-system (pathname &key name)
   (progn
     (asdf:load-asd pathname :name name)
-    (find-system name)))
+    (asdf:find-system name)))
 
 (defun inferred-system-p (system)
   (case (class-name (class-of system))
@@ -42,8 +30,8 @@
 
 (defun inferred-dependencies (system depends-on)
   (uiop:nest
-   (let ((system-name (component-name system))
-         (src (component-pathname system))))
+   (let ((system-name (asdf:component-name system))
+         (src (asdf:component-pathname system))))
    (flet ((system-component-p (component)
             (inferred-system-component-p system-name component))))
    (if (not (member t (mapcar #'system-component-p depends-on)))
@@ -75,10 +63,10 @@
         (:require nil))))
 
 (defun system-dependencies (system)
-  (let* ((system-name (component-name system))
-         (defsystem-dependencies (system-defsystem-depends-on system))
-         (weak-dependencies (system-weakly-depends-on system))
-         (direct-dependencies (system-depends-on system))
+  (let* ((system-name (asdf:component-name system))
+         (defsystem-dependencies (asdf:system-defsystem-depends-on system))
+         (weak-dependencies (asdf:system-weakly-depends-on system))
+         (direct-dependencies (asdf:system-depends-on system))
          (inferred-dependencies (when (inferred-system-p system)
                                   (inferred-dependencies system
                                                          direct-dependencies))))
