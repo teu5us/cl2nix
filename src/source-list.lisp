@@ -1,15 +1,26 @@
 (defpackage :cl2nix/source-list
-  (:use #:common-lisp))
+  (:use #:common-lisp
+        #:cl2nix/util)
+  (:export
+   #:gassoc
+   #:merge-source-lists
+   #:read-source-list-file
+   #:edit-default-overrides
+   #:*default-projects-list*
+   #:*default-overrides-list*
+   #:*editor*))
 
 (in-package :cl2nix/source-list)
 
 (defvar *editor* nil)
 
 (defvar *default-projects-list*
-  #P"../source-list/projcts.sexp")
+  (in-cl2nix-dir
+   "source-list/projects.sexp"))
 
 (defvar *default-overrides-list*
-  #P"../source-list/overrides.sexp")
+  (in-cl2nix-dir
+   "source-list/overrides.sexp"))
 
 (defun edit-default-overrides (&optional editor)
   (uiop:launch-program (list (or editor *editor* (uiop:getenv "EDITOR"))

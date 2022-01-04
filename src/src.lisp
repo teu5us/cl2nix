@@ -9,7 +9,8 @@
    #:latest-release-git-source #:latest-branch
    #:read-source
    #:source-fetch
-   #:source-prefetch))
+   #:source-prefetch
+   #:assoc-source-type))
 
 (in-package :cl2nix/src)
 

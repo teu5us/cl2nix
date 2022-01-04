@@ -1,5 +1,11 @@
 (defpackage :cl2nix/nix-prefetch
-  (:use #:common-lisp #:cl2nix/src #:cl2nix/util))
+  (:use #:common-lisp #:cl2nix/src #:cl2nix/util)
+  (:export
+   #:nix-prefetch
+   #:prefetch-source
+   #:prefetch-rev
+   #:prefetch-sha256
+   #:prefetch-path))
 
 (in-package :cl2nix/nix-prefetch)
 
@@ -50,13 +56,13 @@ OR
 
 (defclass nix-prefetch ()
   ((source :initarg :source
-           :accessor source)
+           :accessor prefetch-source)
    (rev :initarg :rev
-        :accessor rev)
+        :accessor prefetch-rev)
    (sha256 :initarg :sha256
-           :accessor sha256)
+           :accessor prefetch-sha256)
    (path :initarg :path
-         :accessor path)))
+         :accessor prefetch-path)))
 
 ;; fix "warning: unknown setting..."
 (defun run-nix-prefetch (program &rest args)

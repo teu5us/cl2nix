@@ -1,12 +1,11 @@
 (defpackage :cl2nix/nix-system
-  (:use #:common-lisp #:cl2nix/util)
-  (:import-from #:cl2nix/src
-                #:read-source)
-  (:import-from #:cl2nix/dep
-                #:load-system
-                #:describe-system)
-  (:import-from #:cl2nix/nix-prefetch
-                #:nix-prefetch))
+  (:use #:common-lisp
+        #:cl2nix/util
+        #:cl2nix/src
+        #:cl2nix/dep
+        #:cl2nix/nix-prefetch)
+  (:export
+   #:systems-from-source))
 
 (in-package :cl2nix/nix-system)
 
