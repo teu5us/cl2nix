@@ -163,15 +163,16 @@
 (defun assoc-source-type (type)
   (cdr (assoc type *source-classes* :test #'string-equal)))
 
-(defun read-source (str)
-  (destructuring-bind (type link &rest args)
-      (split-on-space str)
-    (let ((class (assoc-source-type type))
-          (name (name-from-link link)))
-      (apply #'make-source
-             class
-             `(,name
-               ,@(unless (subtypep class 'templated-source)
-                   (list :location link))
-               ,@(when args
-                   (cons :branch args)))))))
+(defun read-source (plist-source)
+  (let ((name (getf plist-source :name))
+        (source-desc (getf plist-source :source-desc)))
+    (destructuring-bind (type link &rest args)
+        (split-on-space source-desc)
+      (let ((class (assoc-source-type type)))
+        (apply #'make-source
+               class
+               `(,name
+                 ,@(unless (subtypep class 'templated-source)
+                     (list :location link))
+                 ,@(when args
+                     (cons :branch args))))))))
