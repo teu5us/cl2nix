@@ -36,6 +36,12 @@
       (c)
       (declare (ignorable c))
       (format t "No such file \"~A\", ignoring."
+              filepath))
+    #+ccl
+    (ccl::simple-file-error
+      (c)
+      (declare (ignorable c))
+      (format t "No such file \"~A\", ignoring."
               filepath))))
 
 (defun gassoc (key value list)
