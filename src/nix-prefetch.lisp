@@ -48,6 +48,16 @@ OR
 
 ; prefetchers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defclass nix-prefetch ()
+  ((source :initarg :source
+           :accessor source)
+   (rev :initarg :rev
+        :accessor rev)
+   (sha256 :initarg :sha256
+           :accessor sha256)
+   (path :initarg :path
+         :accessor path)))
+
 ;; fix "warning: unknown setting..."
 (defun run-nix-prefetch (program &rest args)
   (prog2
@@ -57,9 +67,9 @@ OR
       (with-output-to-string (s)
         (uiop:run-program `(,program ,@args) :output s)
         s)
-      (progn
-        (setenv "QUIET" "0")
-        (setenv "PRINT_PATH" "0"))))
+    (progn
+      (setenv "QUIET" "0")
+      (setenv "PRINT_PATH" "0"))))
 
 (defun run-simple-nix-prefetch (program url keywords &rest args)
   (apply #'read-nix-prefetch-output
@@ -122,6 +132,5 @@ Returns a plist with three keys.
   (run-git-nix-prefetch (location source) "--branch-name" (latest-branch source)))
 
 (defmethod nix-prefetch :around ((source source))
-  `(:fetch ,(source-fetch source)
-    :url ,(location source)
-    ,@(call-next-method)))
+  (apply #'make-instance 'nix-prefetch
+         :source source (call-next-method)))
