@@ -27,9 +27,10 @@
                  :accessor dependencies)))
 
 (defun extract (path)
-  (uiop:run-program (list "../scripts/extract"
-                          (namestring path))
-                    :output :string))
+  (uiop:run-program
+   (list (in-cl2nix-dir "scripts/extract")
+         (namestring path))
+   :output :string))
 
 (defun asds (path)
   (remove-if-not #'(lambda (str)

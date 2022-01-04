@@ -76,12 +76,12 @@
 (defclass latest-github-release-source (latest-release-git-source)
   ()
   (:default-initargs
-   :script "../scripts/latest_github_tag"))
+   :script (in-cl2nix-dir "scripts/latest_github_tag")))
 
 (defclass latest-gitlab-release-source (latest-release-git-source)
   ()
   (:default-initargs
-   :script "../scripts/latest_gitlab_tag"))
+   :script (in-cl2nix-dir "scripts/latest_gitlab_tag")))
 
 (defclass kmr-git-source (templated-git-source)
   ()
@@ -111,13 +111,13 @@
 (defclass mercurial-source (source)
   ()
   (:default-initargs
-   :prefetch "../scripts/nix-prefetch-hg"
+   :prefetch (in-cl2nix-dir "scripts/nix-prefetch-hg")
    :fetch "fetchhg"))
 
 (defclass svn-source (source)
   ()
   (:default-initargs
-   :prefetch "../scripts/nix-prefetch-svn"
+   :prefetch (in-cl2nix-dir "scripts/nix-prefetch-svn")
    :fetch "fetchsvn"))
 
 (defclass darcs-source (source)

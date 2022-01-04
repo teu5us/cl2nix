@@ -4,7 +4,8 @@
    #:split-on-space
    #:split-on-slash
    #:split-on
-   #:ends-with))
+   #:ends-with
+   #:in-cl2nix-dir))
 
 (in-package :cl2nix/util)
 
@@ -23,3 +24,7 @@
      (and end-position
           (= (length str) (+ end-position (length end))))
      end-position)))
+
+(defun in-cl2nix-dir (pathname)
+  (merge-pathnames pathname
+                   (asdf:system-source-directory :cl2nix)))
