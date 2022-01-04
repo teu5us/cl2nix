@@ -5,6 +5,7 @@
         #:cl2nix/dep
         #:cl2nix/nix-prefetch)
   (:export
+   #:extract
    #:systems-from-source))
 
 (in-package :cl2nix/nix-system)
