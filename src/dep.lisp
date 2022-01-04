@@ -97,6 +97,7 @@
 
 (defun describe-system (system)
   (list :pname (component-name system)
+        :author (asdf:system-author system)
         :version (asdf:component-version system)
         :path (component-pathname system)
         :description (asdf/component:component-description system)
