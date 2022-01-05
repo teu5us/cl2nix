@@ -57,10 +57,18 @@
                         :collect (uiop:directory-files dir)))))
 
 (defun asd-system-names (asd)
-  (loop :for form :in (uiop:read-file-forms asd)
-        :when (or (eql (find-symbol "DEFSYSTEM") (car form))
-                  (eql (find-symbol "DEFSYSTEM" :asdf) (car form)))
-          :collect (cadr form)))
+  (let ((asd-words (uiop:with-safe-io-syntax (:package *package*)
+                     (coerce
+                      (uiop:split-string
+                       (uiop:read-file-string asd)
+                       :separator '(#\Space #\Tab #\Newline))
+                      'vector))))
+    (loop :for word :across asd-words
+          :for n :from 0 :to (length asd-words)
+          :when (or (ends-with "defsystem" word)
+                    (ends-with "asdf:defsystem" word))
+            :collect (string-trim '(#\" #\# #\:)
+                                  (aref asd-words (1+ n))))))
 
 (defun asd-system (system-name asd prefetch)
   (let* ((system (load-system asd :name system-name))
