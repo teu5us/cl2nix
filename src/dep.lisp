@@ -1,10 +1,22 @@
 (defpackage :cl2nix/dep
-  (:use #:common-lisp)
+  (:use #:common-lisp #:cl2nix/log)
   (:export
    #:load-system
    #:system-dependencies))
 
 (in-package :cl2nix/dep)
+
+(define-condition failed-to-load-asd (log-message)
+  ((system-name :initarg :system-name
+                :reader system-name)
+   (asd-path :initarg :asd-path
+             :reader asd-path))
+  (:report (lambda (condition stream)
+             (format stream
+                     "~A Failed to load system ~S from file ~S~%"
+                     (log-timestamp condition)
+                     (system-name condition)
+                     (asd-path condition)))))
 
 (defun dedup-append (pred &rest lists)
   (remove-duplicates (apply #'append lists) :test pred))
@@ -16,9 +28,15 @@
 ;;      (in-package ,return-to)))
 
 (defun load-system (pathname &key name)
-  (progn
-    (asdf:load-asd pathname :name name)
-    (asdf:find-system name)))
+  (handler-case
+      (progn
+        (asdf:load-asd pathname :name name)
+        (asdf:find-system name))
+      (error (c)
+        (declare (ignorable c))
+        (to-log 'failed-to-load-asd :system-name name
+                                    :asd-path pathname)
+        nil)))
 
 (defun inferred-system-p (system)
   (case (class-name (class-of system))
