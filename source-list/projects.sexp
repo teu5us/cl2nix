@@ -1164,9 +1164,7 @@
  (:NAME "cl-string-generator" :SOURCE-DESC
   "git https://github.com/pokepay/cl-string-generator.git")
  (:NAME "cl-string-match" :SOURCE-DESC
-  "git https://github.com/sharplispers/cl-string-match
-# Old:
-# mercurial https://bitbucket.org/vityok/cl-string-match")
+  "git https://github.com/sharplispers/cl-string-match")
  (:NAME "cl-strings" :SOURCE-DESC
   "git https://github.com/diogoalexandrefranco/cl-strings.git")
  (:NAME "cl-svg" :SOURCE-DESC "git https://github.com/wmannis/cl-svg")
@@ -1760,7 +1758,7 @@
   "git https://github.com/marcoheisig/fast-generic-functions.git")
  (:NAME "fast-http" :SOURCE-DESC
   "git https://github.com/fukamachi/fast-http.git")
- (:NAME "fast-io" :SOURCE-DESC "git https://github.com/rpav/fast-io.git ")
+ (:NAME "fast-io" :SOURCE-DESC "git https://github.com/rpav/fast-io.git")
  (:NAME "fast-websocket" :SOURCE-DESC
   "git https://github.com/fukamachi/fast-websocket.git")
  (:NAME "feeder" :SOURCE-DESC "git https://github.com/shinmera/feeder.git")
@@ -1894,7 +1892,7 @@
  (:NAME "gooptest" :SOURCE-DESC
   "git https://github.com/markasoftware/gooptest.git")
  (:NAME "gordon" :SOURCE-DESC
-  "git https://github.com/sgarciac/gordon.git                                          ")
+  "git https://github.com/sgarciac/gordon.git")
  (:NAME "graph" :SOURCE-DESC "git https://github.com/eschulte/graph.git")
  (:NAME "graylex" :SOURCE-DESC "git https://github.com/e-user/graylex.git")
  (:NAME "green-threads" :SOURCE-DESC
@@ -2257,8 +2255,7 @@
   "git https://github.com/dlowe-net/local-time.git")
  (:NAME "log4cl-extras" :SOURCE-DESC
   "git https://github.com/40ants/log4cl-extras.git")
- (:NAME "log4cl" :SOURCE-DESC "git https://github.com/sharplispers/log4cl.git
-git https://github.com/7max/log4cl.git")
+ (:NAME "log4cl" :SOURCE-DESC "git https://github.com/sharplispers/log4cl.git")
  (:NAME "log5" :SOURCE-DESC "git https://github.com/sharplispers/log5.git")
  (:NAME "lorem-ipsum" :SOURCE-DESC
   "git https://github.com/phoe/lorem-ipsum.git")
@@ -2322,8 +2319,7 @@ git https://github.com/7max/log4cl.git")
  (:NAME "mel-base" :SOURCE-DESC
   "git https://github.com/neonsquare/mel-base.git")
  (:NAME "memoize" :SOURCE-DESC
-  "single-file http://beta.quicklisp.org/orphans/tfeb/memoize.lisp
-single-file http://www.tfeb.org/programs/lisp/memoize.lisp")
+  "single-file http://beta.quicklisp.org/orphans/tfeb/memoize.lisp")
  (:NAME "message-oo" :SOURCE-DESC
   "git https://github.com/Kalimehtar/message-oo.git")
  (:NAME "messagebox" :SOURCE-DESC
@@ -2723,8 +2719,7 @@ single-file http://www.tfeb.org/programs/lisp/memoize.lisp")
  (:NAME "py-configparser" :SOURCE-DESC
   "svn https://svn.common-lisp.net/py-configparser/trunk")
  (:NAME "py-configvalidator" :SOURCE-DESC
-  "git https://github.com/arbscht/py-configvalidator.git
-git https://gitorious.org/py-configvalidator/py-configvalidator.git")
+  "git https://github.com/arbscht/py-configvalidator.git")
  (:NAME "py4cl" :SOURCE-DESC "git https://github.com/bendudson/py4cl.git")
  (:NAME "py4cl2" :SOURCE-DESC
   "latest-github-release https://github.com/digikar99/py4cl2.git")
@@ -2830,12 +2825,10 @@ git https://gitorious.org/py-configvalidator/py-configvalidator.git")
  (:NAME "resignal-bind" :SOURCE-DESC
   "git https://github.com/hyotang666/resignal-bind.git")
  (:NAME "restas-directory-publisher" :SOURCE-DESC
-  "git https://github.com/archimag/restas-directory-publisher.git
-tagged-git https://github.com/archimag/restas-directory-publisher.git version-0.1")
+  "tagged-git https://github.com/archimag/restas-directory-publisher.git version-0.1")
  (:NAME "restas.file-publisher" :SOURCE-DESC
   "git https://github.com/kevinlynx/restas.file-publisher.git")
- (:NAME "restas" :SOURCE-DESC "git https://github.com/archimag/restas.git
-tagged-git https://github.com/archimag/restas.git version-0.1.3")
+ (:NAME "restas" :SOURCE-DESC "tagged-git https://github.com/archimag/restas.git version-0.1.3")
  (:NAME "restful" :SOURCE-DESC "git https://github.com/Ralt/restful.git")
  (:NAME "restricted-functions" :SOURCE-DESC
   "git https://github.com/marcoheisig/restricted-functions.git")
@@ -2865,8 +2858,7 @@ tagged-git https://github.com/archimag/restas.git version-0.1.3")
   "branched-git https://github.com/cbaggers/rtg-math.git release-quicklisp")
  (:NAME "rucksack" :SOURCE-DESC
   "git https://gitlab.common-lisp.net/rucksack/rucksack.git")
- (:NAME "rutils" :SOURCE-DESC "git https://github.com/vseloved/rutils.git
-tagged-git https://github.com/vseloved/rutils.git 1.0.0")
+ (:NAME "rutils" :SOURCE-DESC "tagged-git https://github.com/vseloved/rutils.git 1.0.0")
  (:NAME "ryeboy" :SOURCE-DESC "git https://github.com/AeroNotix/ryeboy.git")
  (:NAME "s-base64" :SOURCE-DESC "git https://github.com/svenvc/s-base64.git")
  (:NAME "s-dot2" :SOURCE-DESC "git https://notabug.org/cage/s-dot2.git")
@@ -3325,8 +3317,7 @@ tagged-git https://github.com/vseloved/rutils.git 1.0.0")
  (:NAME "trivial-timers" :SOURCE-DESC
   "http http://releases.unknownlamer.org/trivial-timers/trivial-timers_latest.tar.gz")
  (:NAME "trivial-types" :SOURCE-DESC
-  "git https://github.com/m2ym/trivial-types.git
-git https://github.com/digikar99/trivial-types.git")
+  "git https://github.com/digikar99/trivial-types.git")
  (:NAME "trivial-update" :SOURCE-DESC
   "git https://github.com/cbaggers/trivial-update.git")
  (:NAME "trivial-utf-8" :SOURCE-DESC
@@ -3536,8 +3527,7 @@ git https://github.com/digikar99/trivial-types.git")
  (:NAME "zip" :SOURCE-DESC "git https://github.com/bluelisp/zip.git")
  (:NAME "zippy" :SOURCE-DESC "git https://github.com/Shinmera/zippy.git")
  (:NAME "ziz" :SOURCE-DESC "git https://github.com/yitzchak/ziz.git")
- (:NAME "zlib" :SOURCE-DESC "git https://github.com/sharplispers/zlib.git
-git https://gitlab.common-lisp.net/zlib/zlib.git")
+ (:NAME "zlib" :SOURCE-DESC "git https://github.com/sharplispers/zlib.git")
  (:NAME "zpb-exif" :SOURCE-DESC
   "latest-github-release https://github.com/xach/zpb-exif.git")
  (:NAME "zpb-ttf" :SOURCE-DESC
