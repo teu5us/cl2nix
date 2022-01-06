@@ -65,8 +65,8 @@
                       'vector))))
     (loop :for word :across asd-words
           :for n :from 0 :to (length asd-words)
-          :when (or (ends-with "defsystem" word)
-                    (ends-with "asdf:defsystem" word))
+          :when (or (ends-with "(defsystem" word)
+                    (ends-with "(asdf:defsystem" word))
             :collect (string-trim '(#\" #\# #\:)
                                   (aref asd-words (1+ n))))))
 
