@@ -6,7 +6,9 @@
    #:log-timestamp
    #:to-log
    #:log-opened
-   #:log-closed))
+   #:log-closed
+   #:close-log
+   #:open-log))
 
 (in-package :cl2nix/log)
 
@@ -21,21 +23,30 @@
     (apply #'format nil "~A/~A/~A ~A:~A:~A"
            (mapcar #'normalize (list date month year hour minute second)))))
 
-(defvar *log* *standard-output*)
+(defvar *log* *error-output*)
 
 (defun open-log (&optional file)
-  (if (or (pathnamep file)
-          (stringp file))
-      (open (truename file)
-            :direction :output
-            :if-exists :error
-            :if-does-not-exist :create)
-      t))
+  (setf *log*
+        (if (or (pathnamep file)
+                (stringp file))
+            (open file
+                  :direction :output
+                  :if-exists :supersede
+                  :if-does-not-exist :create)
+            (or *log* *error-output*)))
+  (to-log 'log-opened))
+
+(defun close-log ()
+  (to-log 'log-closed)
+  (unless (equal *log* *error-output*)
+    (close *log*)
+    (setf *log* *error-output*)))
 
 (defun to-log (condition-class &rest args)
   (let ((*print-escape* nil))
     (print-object (apply #'make-condition condition-class args)
-                  *log*)))
+                  *log*)
+    (finish-output *log*)))
 
 (define-condition log-message (simple-condition)
   ((time :initarg :time
@@ -51,7 +62,7 @@
   (:report (lambda (condition stream)
              (format stream
                      "~{~c~}
-~A Log opened"
+~A Log opened~%"
                      (make-list 79 :initial-element #\-)
                      (log-timestamp condition)))))
 
@@ -60,6 +71,6 @@
   (:report (lambda (condition stream)
              (format stream
                      "~A Log closed
-~{~c~}"
+~{~c~}~%"
                      (log-timestamp condition)
                      (make-list 79 :initial-element #\-)))))
