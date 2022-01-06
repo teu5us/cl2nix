@@ -1,11 +1,12 @@
 (defpackage :cl2nix/nix-prefetch
-  (:use #:common-lisp #:cl2nix/src #:cl2nix/util)
+  (:use #:common-lisp #:cl2nix/src #:cl2nix/log #:cl2nix/util)
   (:export
    #:nix-prefetch
    #:prefetch-source
    #:prefetch-rev
    #:prefetch-sha256
-   #:prefetch-path))
+   #:prefetch-path
+   #:*failed-prefetch*))
 
 (in-package :cl2nix/nix-prefetch)
 
@@ -54,15 +55,30 @@ OR
 
 ; prefetchers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define-condition prefetch-failed (log-message)
+  ((name :initarg :name
+         :reader name)
+   (source-desc :initarg :source-desc
+                :reader source-desc))
+  (:report (lambda (condition stream)
+             (format stream
+                     "~A Failed to prefetch source ~S with source-desc ~S~&"
+                     (log-timestamp condition)
+                     (name condition)
+                     (source-desc condition)))))
+
 (defclass nix-prefetch ()
   ((source :initarg :source
            :accessor prefetch-source)
    (rev :initarg :rev
+        :initform nil
         :accessor prefetch-rev)
    (sha256 :initarg :sha256
            :accessor prefetch-sha256)
    (path :initarg :path
          :accessor prefetch-path)))
+
+(defvar *failed-prefetch* nil)
 
 ;; fix "warning: unknown setting..."
 (defun run-nix-prefetch (program &rest args)
@@ -83,6 +99,9 @@ OR
          keywords))
 
 (defun run-git-nix-prefetch (url &rest args)
+  (setenv "GIT_ASKPASS" "")
+  (setenv "GIT_TERMINAL_PROMPT" "")
+  (setenv "GCM_INTERACTIVE" "never")
   (let* ((output (apply #'run-nix-prefetch "nix-prefetch-git" url args))
          (parsed (filter-nix-prefetch-git output)))
     (flet ((a (str) (strassoc str parsed)))
@@ -138,5 +157,16 @@ Returns a plist with three keys.
   (run-git-nix-prefetch (location source) "--branch-name" (latest-branch source)))
 
 (defmethod nix-prefetch :around ((source source))
-  (apply #'make-instance 'nix-prefetch
-         :source source (call-next-method)))
+  (handler-case
+      (apply #'make-instance 'nix-prefetch
+             :source source (call-next-method))
+    (error (c)
+      (declare (ignorable c))
+      (let ((name (source-name source))
+            (source-desc (source-desc source)))
+        (push (list :name name
+                    :source-desc source-desc)
+              *failed-prefetch*)
+        (to-log 'prefetch-failed
+                :name name
+                :source-desc source-desc)))))
