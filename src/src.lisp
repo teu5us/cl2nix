@@ -10,7 +10,10 @@
    #:read-source
    #:source-fetch
    #:source-prefetch
-   #:assoc-source-type))
+   #:assoc-source-type
+   #:source-location
+   #:source-desc
+   #:assoc-source-class))
 
 (in-package :cl2nix/src)
 
@@ -37,6 +40,8 @@
          :accessor source-name)
    (fetch :initarg :fetch
           :reader source-fetch)
+   (source-desc :initarg :source-desc
+                :reader source-desc)
    (prefetch :initarg :prefetch
              :reader source-prefetch)
    (location :initarg :location
@@ -173,6 +178,7 @@
         (apply #'make-source
                class
                `(,name
+                 :source-desc ,source-desc
                  ,@(unless (subtypep class 'templated-source)
                      (list :location link))
                  ,@(when args
