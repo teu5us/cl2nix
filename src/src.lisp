@@ -1,6 +1,7 @@
 (defpackage :cl2nix/src
   (:use
    #:common-lisp
+   #:cl2nix/log
    #:cl2nix/util)
   (:export
    #:source #:git-source #:branched-git-source #:url-source
@@ -34,6 +35,26 @@
         str)))
 
 ; source definitions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-condition working-on-source (log-message)
+  ((name :initarg :name
+         :reader name)
+   (source-desc :initarg :source-desc
+                :reader source-desc))
+  (:report (lambda (condition stream)
+             (format stream
+                     "~A Working on source ~S with source-desc ~S~&"
+                     (log-timestamp condition)
+                     (name condition)
+                     (source-desc condition)))))
+
+(define-condition empty-source-desc (working-on-source)
+  ()
+  (:report (lambda (condition stream)
+             (format stream
+                     "~A Source ~S is ignored due to empty source-desc~&"
+                     (log-timestamp condition)
+                     (name condition)))))
 
 (defclass source ()
   ((name :initarg :name
@@ -172,14 +193,18 @@
 (defun read-source (plist-source)
   (let ((name (getf plist-source :name))
         (source-desc (getf plist-source :source-desc)))
-    (destructuring-bind (type link &rest args)
-        (split-on-space source-desc)
-      (let ((class (assoc-source-type type)))
-        (apply #'make-source
-               class
-               `(,name
-                 :source-desc ,source-desc
-                 ,@(unless (subtypep class 'templated-source)
-                     (list :location link))
-                 ,@(when args
-                     (cons :branch args))))))))
+    (to-log 'working-on-source :name name :source-desc source-desc)
+    (if (or (string= source-desc "")
+            (null source-desc))
+        (to-log 'empty-source-desc :name name)
+      (destructuring-bind (type link &rest args)
+          (split-on-space source-desc)
+        (let ((class (assoc-source-type type)))
+          (apply #'make-source
+                 class
+                 `(,name
+                   :source-desc ,source-desc
+                   ,@(unless (subtypep class 'templated-source)
+                       (list :location link))
+                   ,@(when args
+                       (cons :branch args)))))))))

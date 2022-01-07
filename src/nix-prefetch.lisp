@@ -55,11 +55,20 @@ OR
 
 ; prefetchers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-condition prefetch-failed (log-message)
+(define-condition prefetching-source (log-message)
   ((name :initarg :name
          :reader name)
    (source-desc :initarg :source-desc
                 :reader source-desc))
+  (:report (lambda (condition stream)
+             (format stream
+                     "~A Prefetching source ~S with source-desc ~S~&"
+                     (log-timestamp condition)
+                     (name condition)
+                     (source-desc condition)))))
+
+(define-condition prefetch-failed (prefetching-source)
+  ()
   (:report (lambda (condition stream)
              (format stream
                      "~A Failed to prefetch source ~S with source-desc ~S~&"
@@ -157,13 +166,16 @@ Returns a plist with three keys.
   (run-git-nix-prefetch (location source) "--branch-name" (latest-branch source)))
 
 (defmethod nix-prefetch :around ((source source))
-  (handler-case
-      (apply #'make-instance 'nix-prefetch
-             :source source (call-next-method))
-    (error (c)
-      (declare (ignorable c))
-      (let ((name (source-name source))
-            (source-desc (source-desc source)))
+  (let ((name (source-name source))
+        (source-desc (source-desc source)))
+    (to-log 'prefetching-source
+            :name name
+            :source-desc source-desc)
+    (handler-case
+        (apply #'make-instance 'nix-prefetch
+               :source source (call-next-method))
+      (error (c)
+        (declare (ignorable c))
         (push (list :name name
                     :source-desc source-desc)
               *failed-prefetch*)

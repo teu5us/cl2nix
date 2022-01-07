@@ -77,10 +77,10 @@
                    :pname (asdf:component-name system) ;; component-name
                    :version (asdf:component-version system) ;; component-version
                    :fetcher (source-fetch source)
-                   :src (list
-                         :url (location source)
-                         :sha256 (prefetch-sha256 prefetch)
-                         :rev (prefetch-rev prefetch))
+                   :src `(:url ,(location source)
+                          :sha256 ,(prefetch-sha256 prefetch)
+                          ,@(when (prefetch-rev prefetch)
+                              (list :rev (prefetch-rev prefetch))))
                    :dependencies (system-dependencies system))))
 
 (defun asd-systems (asd prefetch)
@@ -88,15 +88,16 @@
         :collect (asd-system system-name asd prefetch)))
 
 (defun systems-from-source (src-desc)
-  (let* ((source (read-source src-desc))
-         (prefetch-result (nix-prefetch source))
-         (path (prefetch-path prefetch-result))
-         (extracted-path (truename (extract (namestring path)))))
-    (let* ((asds (asds extracted-path)))
-      (prog1
-          (apply #'append
-                 (loop :for asd :in asds
-                       :collect (asd-systems asd prefetch-result)))
-        (uiop:delete-directory-tree extracted-path
-                                    :validate t
-                                    :if-does-not-exist :ignore)))))
+  (let* ((source (read-source src-desc)))
+    (when source
+        (let* ((prefetch-result (nix-prefetch source))
+               (path (prefetch-path prefetch-result))
+               (extracted-path (truename (extract (namestring path))))
+               (asds (asds extracted-path)))
+          (prog1
+              (apply #'append
+                     (loop :for asd :in asds
+                           :collect (asd-systems asd prefetch-result)))
+            (uiop:delete-directory-tree extracted-path
+                                        :validate t
+                                        :if-does-not-exist :ignore))))))
