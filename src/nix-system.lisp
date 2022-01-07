@@ -6,7 +6,8 @@
         #:cl2nix/nix-prefetch)
   (:export
    #:extract
-   #:systems-from-source))
+   #:systems-from-source
+   #:describe-source))
 
 (in-package :cl2nix/nix-system)
 
@@ -15,16 +16,6 @@
           :accessor pname)
    (version :initarg :version
             :accessor version)
-   (fetcher :initarg :fetcher
-            :accessor fetcher)
-   (src :initarg :src
-        :accessor src)
-   ;; (url :initarg :url
-   ;;      :accessor url)
-   ;; (sha256 :initarg :sha256
-   ;;         :accessor sha256)
-   ;; (rev :initarg :rev
-   ;;      :accessor rev)
    (dependencies :initarg :dependencies
                  :accessor dependencies)))
 
@@ -34,11 +25,20 @@
       (format stream "
 ~:Tpname = ~S
 ~:Tversion = ~S
-~:Tfetcher = ~S
-~:Tsrc = ~S
 ~:Tdependencies = ~S
-~:T" pname version fetcher src dependencies))))
+~:T" pname version dependencies))))
 
+(defclass nix-source-description ()
+  ((fetcher :initarg :fetcher
+            :accessor fetcher)
+   (url :initarg :url
+        :accessor url)
+   (sha256 :initarg :sha256
+           :accessor sha256)
+   (rev :initarg :rev
+        :accessor rev)
+   (systems :initarg :systems
+            :accessor systems)))
 
 (defun extract (path)
   (uiop:run-program
@@ -70,34 +70,36 @@
             :collect (string-trim '(#\" #\# #\:)
                                   (aref asd-words (1+ n))))))
 
-(defun asd-system (system-name asd prefetch)
-  (let* ((system (load-system asd :name system-name))
-         (source (prefetch-source prefetch)))
+(defun asd-system (system-name asd)
+  (let* ((system (load-system asd :name system-name)))
     (make-instance 'nix-system
                    :pname (asdf:component-name system) ;; component-name
                    :version (asdf:component-version system) ;; component-version
-                   :fetcher (source-fetch source)
-                   :src `(:url ,(location source)
-                          :sha256 ,(prefetch-sha256 prefetch)
-                          ,@(when (prefetch-rev prefetch)
-                              (list :rev (prefetch-rev prefetch))))
                    :dependencies (system-dependencies system))))
 
-(defun asd-systems (asd prefetch)
+(defun asd-systems (asd)
   (loop :for system-name :in (asd-system-names asd)
-        :collect (asd-system system-name asd prefetch)))
+        :collect (asd-system system-name asd)))
 
-(defun systems-from-source (src-desc)
-  (let* ((source (read-source src-desc)))
+(defun systems-from-asds (asds)
+  (apply #'append
+         (loop :for asd :in asds
+               :collect (asd-systems asd))))
+
+(defun describe-source (src-desc)
+  (let ((source (read-source src-desc)))
     (when source
-        (let* ((prefetch-result (nix-prefetch source))
-               (path (prefetch-path prefetch-result))
-               (extracted-path (truename (extract (namestring path))))
-               (asds (asds extracted-path)))
-          (prog1
-              (apply #'append
-                     (loop :for asd :in asds
-                           :collect (asd-systems asd prefetch-result)))
-            (uiop:delete-directory-tree extracted-path
-                                        :validate t
-                                        :if-does-not-exist :ignore))))))
+      (let* ((prefetch-result (nix-prefetch source))
+             (path (prefetch-path prefetch-result))
+             (extracted-path (uiop:truenamize (extract (namestring path))))
+             (asds (asds extracted-path)))
+        (prog1
+            (make-instance 'nix-source-description
+                           :fetcher (source-fetch source)
+                           :url (location source)
+                           :rev (prefetch-rev prefetch-result)
+                           :sha256 (prefetch-sha256 prefetch-result)
+                           :systems (systems-from-asds asds))
+          (uiop:delete-directory-tree extracted-path
+                                      :validate t
+                                      :if-does-not-exist :ignore))))))
