@@ -6,8 +6,15 @@
         #:cl2nix/nix-prefetch)
   (:export
    #:extract
-   #:systems-from-source
-   #:describe-source))
+   #:describe-source
+   #:pname
+   #:version
+   #:dependencies
+   #:fetcher
+   #:url
+   #:sha256
+   #:rev
+   #:systems))
 
 (in-package :cl2nix/nix-system)
 
