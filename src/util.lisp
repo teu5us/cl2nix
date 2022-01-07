@@ -5,7 +5,8 @@
    #:split-on-slash
    #:split-on
    #:ends-with
-   #:in-cl2nix-dir))
+   #:in-cl2nix-dir
+   #:starts-with))
 
 (in-package :cl2nix/util)
 
@@ -17,6 +18,13 @@
 
 (defun split-on-slash (str)
   (split-on str #\/))
+
+(defun starts-with (start str)
+  (let ((start-position (search start str :test #'string=)))
+    (values
+     (when start-position
+       (= 0 start-position))
+     start-position)))
 
 (defun ends-with (end str)
   (let ((end-position (search end str :from-end t :test #'string=)))

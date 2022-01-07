@@ -1,5 +1,5 @@
 (defpackage :cl2nix/dep
-  (:use #:common-lisp #:cl2nix/log)
+  (:use #:common-lisp #:cl2nix/log #:cl2nix/util)
   (:export
    #:load-system
    #:system-dependencies))
@@ -21,12 +21,6 @@
 (defun dedup-append (pred &rest lists)
   (remove-duplicates (apply #'append lists) :test pred))
 
-;; (defmacro with-package (package return-to &body forms)
-;;   `(prog2
-;;        (in-package ,package)
-;;        (progn ,@forms)
-;;      (in-package ,return-to)))
-
 (defun load-system (pathname &key name)
   (handler-case
       (progn
@@ -38,13 +32,18 @@
                                     :asd-path pathname)
         nil)))
 
+(defun internal-package-p (package-name impl)
+  (case impl
+    (:sbcl (starts-with "sb-" package-name))
+    (t nil)))
+
 (defun inferred-system-p (system)
   (case (class-name (class-of system))
     (asdf/system:system nil)
     (asdf/package-inferred-system:package-inferred-system t)))
 
 (defun inferred-system-component-p (system-name component-name)
-  (eql 0 (search (format nil "~A/" system-name) component-name)))
+  (starts-with (format nil "~A/" system-name) component-name))
 
 (defun inferred-dependencies (system depends-on)
   (uiop:nest
@@ -92,6 +91,7 @@
      (dedup-append #'string-equal)
      (remove-if #'(lambda (dependency-name)
                     (or (null dependency-name)
+                        (internal-package-p dependency-name (asdf:implementation-type))
                         (when (inferred-system-p system)
                           (inferred-system-component-p system-name dependency-name)))))
      (mapcar #'parse-specifier
