@@ -14,7 +14,11 @@
    #:url
    #:sha256
    #:rev
-   #:systems))
+   #:systems
+   #:name
+   #:asd
+   #:source-root
+   #:description))
 
 (in-package :cl2nix/nix-system)
 
@@ -23,6 +27,12 @@
           :accessor pname)
    (version :initarg :version
             :accessor version)
+   (asd :initarg :asd
+        :accessor asd)
+   (source-root :initarg :source-root
+                :accessor source-root)
+   (description :initarg :description
+                :accessor description)
    (dependencies :initarg :dependencies
                  :accessor dependencies)))
 
@@ -36,7 +46,9 @@
 ~:T" pname version dependencies))))
 
 (defclass nix-source-description ()
-  ((fetcher :initarg :fetcher
+  ((name :initarg :name
+         :accessor name)
+   (fetcher :initarg :fetcher
             :accessor fetcher)
    (url :initarg :url
         :accessor url)
@@ -78,10 +90,17 @@
                                   (aref asd-words (1+ n))))))
 
 (defun asd-system (system-name asd)
+  "Has to be called with CWD set to the root of the system source, see `DESCRIBE-SOURCE'."
   (let* ((system (load-system asd :name system-name)))
     (make-instance 'nix-system
                    :pname (asdf:component-name system) ;; component-name
                    :version (asdf:component-version system) ;; component-version
+                   :description (asdf/component:component-description system)
+                   :asd (file-namestring asd)
+                   :source-root (let* ((path (directory-namestring
+                                             (uiop:subpathp (pathname asd)
+                                                            (uiop:getcwd)))))
+                                  (if (string= path "") "." path))
                    :dependencies (system-dependencies system))))
 
 (defun asd-systems (asd)
@@ -101,12 +120,14 @@
              (extracted-path (uiop:truenamize (extract (namestring path))))
              (asds (asds extracted-path)))
         (prog1
-            (make-instance 'nix-source-description
-                           :fetcher (source-fetch source)
-                           :url (location source)
-                           :rev (prefetch-rev prefetch-result)
-                           :sha256 (prefetch-sha256 prefetch-result)
-                           :systems (systems-from-asds asds))
+            (uiop:with-current-directory (extracted-path)
+              (make-instance 'nix-source-description
+                             :name (source-name source)
+                             :fetcher (source-fetch source)
+                             :url (location source)
+                             :rev (prefetch-rev prefetch-result)
+                             :sha256 (prefetch-sha256 prefetch-result)
+                             :systems (systems-from-asds asds)))
           (uiop:delete-directory-tree extracted-path
                                       :validate t
                                       :if-does-not-exist :ignore))))))
