@@ -66,6 +66,7 @@
 (defun normalize-version (version-string)
   (format nil "_~A" (substitute #\_ #\. version-string)))
 
+;; FIXME: parse all specifiers
 (defun parse-specifier (dependency)
   (if (stringp dependency)
       dependency
