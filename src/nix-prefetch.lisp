@@ -48,11 +48,6 @@ OR
 (defun strassoc (key alist)
   (cdr (assoc key alist :test #'string=)))
 
-;; this has to be done better
-(defun setenv (name value)
-  #+sbcl (sb-posix::setenv name value 1)
-  #+ccl (ccl::setenv name value))
-
 ; prefetchers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-condition prefetching-source (log-message)
@@ -91,16 +86,12 @@ OR
 
 ;; fix "warning: unknown setting..."
 (defun run-nix-prefetch (program &rest args)
-  (prog2
-      (progn
-        (setenv "QUIET" "1")
-        (setenv "PRINT_PATH" "1"))
-      (with-output-to-string (s)
-        (uiop:run-program `(,program ,@args) :output s)
-        s)
-    (progn
-      (setenv "QUIET" "0")
-      (setenv "PRINT_PATH" "0"))))
+  (progn
+    (setf (uiop:getenv "QUIET") "1")
+    (setf (uiop:getenv "PRINT_PATH") "1")
+    (with-output-to-string (s)
+      (uiop:run-program `(,program ,@args) :output s)
+      s)))
 
 (defun run-simple-nix-prefetch (program url keywords &rest args)
   (apply #'read-nix-prefetch-output
@@ -108,9 +99,9 @@ OR
          keywords))
 
 (defun run-git-nix-prefetch (url &rest args)
-  (setenv "GIT_ASKPASS" "")
-  (setenv "GIT_TERMINAL_PROMPT" "")
-  (setenv "GCM_INTERACTIVE" "never")
+  (setf (uiop:getenv "GIT_ASKPASS") "")
+  (setf (uiop:getenv "GIT_TERMINAL_PROMPT") "")
+  (setf (uiop:getenv "GCM_INTERACTIVE") "never")
   (let* ((output (apply #'run-nix-prefetch "nix-prefetch-git" url args))
          (parsed (filter-nix-prefetch-git output)))
     (flet ((a (str) (strassoc str parsed)))
