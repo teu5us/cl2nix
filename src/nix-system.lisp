@@ -18,7 +18,8 @@
    #:name
    #:asd
    #:source-root
-   #:description))
+   #:description
+   #:package-main-system))
 
 (in-package :cl2nix/nix-system)
 
@@ -111,6 +112,24 @@
   (apply #'append
          (loop :for asd :in asds
                :collect (asd-systems asd))))
+
+(defun package-find-system (name system-list)
+  (find name system-list :key #'pname :test #'string-equal))
+
+(defmethod system-has-description ((obj nix-system))
+  (when (not (null (description obj)))
+    obj))
+
+(defmethod package-main-system ((obj nix-source-description))
+  (with-slots (name systems) obj
+    (let* ((cl? (starts-with "cl-" name))
+           (same-name-system (package-find-system name systems))
+           (no-cl-system (when cl?
+                           (package-find-system (subseq name 3) systems))))
+      (if (not cl?)
+          same-name-system
+          (or (system-has-description same-name-system)
+              (system-has-description no-cl-system))))))
 
 (defun describe-source (src-desc)
   (let ((source (read-source src-desc)))
