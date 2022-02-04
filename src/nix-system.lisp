@@ -7,7 +7,7 @@
   (:export
    #:extract
    #:describe-source
-   #:pname
+   #:name
    #:version
    #:dependencies
    #:fetcher
@@ -15,7 +15,7 @@
    #:sha256
    #:rev
    #:systems
-   #:name
+   #:pname
    #:asd
    #:source-root
    #:description
@@ -24,8 +24,8 @@
 (in-package :cl2nix/nix-system)
 
 (defclass nix-system ()
-  ((pname :initarg :pname
-          :accessor pname)
+  ((name :initarg :name
+          :accessor name)
    (version :initarg :version
             :accessor version)
    (asd :initarg :asd
@@ -39,16 +39,16 @@
 
 (defmethod print-object ((object nix-system) stream)
   (print-unreadable-object (object stream :type t)
-    (with-slots (pname version fetcher src dependencies) object
+    (with-slots (name version fetcher src dependencies) object
       (format stream "
-~:Tpname = ~S
+~:Tname = ~S
 ~:Tversion = ~S
 ~:Tdependencies = ~S
-~:T" pname version dependencies))))
+~:T" name version dependencies))))
 
 (defclass nix-source-description ()
-  ((name :initarg :name
-         :accessor name)
+  ((pname :initarg :pname
+         :accessor pname)
    (fetcher :initarg :fetcher
             :accessor fetcher)
    (url :initarg :url
@@ -94,7 +94,7 @@
   "Has to be called with CWD set to the root of the system source, see `DESCRIBE-SOURCE'."
   (let* ((system (load-system asd :name system-name)))
     (make-instance 'nix-system
-                   :pname (asdf:component-name system) ;; component-name
+                   :name (asdf:component-name system) ;; component-name
                    :version (asdf:component-version system) ;; component-version
                    :description (asdf/component:component-description system)
                    :asd (file-namestring asd)
@@ -114,18 +114,18 @@
                :collect (asd-systems asd))))
 
 (defun package-find-system (name system-list)
-  (find name system-list :key #'pname :test #'string-equal))
+  (find name system-list :key #'name :test #'string-equal))
 
 (defmethod system-has-description ((obj nix-system))
   (when (not (null (description obj)))
     obj))
 
 (defmethod package-main-system ((obj nix-source-description))
-  (with-slots (name systems) obj
-    (let* ((cl? (starts-with "cl-" name))
-           (same-name-system (package-find-system name systems))
+  (with-slots (pname systems) obj
+    (let* ((cl? (starts-with "cl-" pname))
+           (same-name-system (package-find-system pname systems))
            (no-cl-system (when cl?
-                           (package-find-system (subseq name 3) systems))))
+                           (package-find-system (subseq pname 3) systems))))
       (if (not cl?)
           same-name-system
           (or (system-has-description same-name-system)
@@ -141,7 +141,7 @@
         (prog1
             (uiop:with-current-directory (extracted-path)
               (make-instance 'nix-source-description
-                             :name (source-name source)
+                             :pname (source-name source)
                              :fetcher (source-fetch source)
                              :url (location source)
                              :rev (prefetch-rev prefetch-result)
