@@ -1,6 +1,8 @@
 ;; -*- mode: lisp; -*-
 
-((:NAME "wu-decimal"
+((:NAME "adopt"
+  :SOURCE-DESC "git https://github.com/sjl/adopt.git")
+ (:NAME "wu-decimal"
   :SOURCE-DESC "http http://beta.quicklisp.org/archive/wu-decimal/2013-01-28/wu-decimal-20130128-git.tgz")
  (:NAME "umbra"
   :SOURCE-DESC "http http://beta.quicklisp.org/archive/umbra/2021-01-24/umbra-20210124-git.tgz")
