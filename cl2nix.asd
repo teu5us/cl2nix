@@ -17,5 +17,6 @@ Version used: ~A" (asdf:asdf-version))
                "cl2nix/nix-system"
                "cl2nix/source-list"
                "cl2nix/dump-nix-system"
-               "cl2nix/log")
+               "cl2nix/log"
+               "cl2nix/database")
   :components ((:file "cl2nix")))

@@ -2,13 +2,13 @@
   (:use #:common-lisp
         #:cl2nix/util)
   (:export
-   #:gassoc
    #:merge-source-lists
    #:read-source-list-file
    #:edit-default-overrides
    #:*default-projects-list*
    #:*default-overrides-list*
-   #:*editor*))
+   #:*editor*
+   #:read-source-lists))
 
 (in-package :cl2nix/source-list)
 
@@ -44,18 +44,20 @@
       (format t "No such file \"~A\", ignoring."
               filepath))))
 
-(defun gassoc (key value list)
-  (flet ((getf-1 (seq)
-           (getf seq key)))
-    (find value list :key #'getf-1 :test #'string=)))
-
 (defun merge-source-lists (&rest lists)
   (loop :for source :in (apply #'append lists)
         :with projects = nil
         :do (let* ((name (getf source :name))
-                   (in-projects (gassoc :name name projects)))
+                   (in-projects (gassoc projects :name name)))
               (if in-projects
                   (setf (getf in-projects :source-desc)
                         (getf source :source-desc))
                   (push source projects)))
         :finally (return (reverse projects))))
+
+(defun read-source-lists (&rest files)
+  (let ((lists (mapcar #'read-source-list-file
+                       (append (list *default-projects-list*
+                                     *default-overrides-list*)
+                               files))))
+    (apply #'merge-source-lists lists)))

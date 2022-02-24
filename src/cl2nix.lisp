@@ -6,7 +6,8 @@
         #:cl2nix/src
         #:cl2nix/nix-system
         #:cl2nix/dump-nix-system
-        #:cl2nix/log)
+        #:cl2nix/log
+        #:cl2nix/database)
   (:export
    #:check-sources))
 
@@ -25,16 +26,15 @@
 (defun write-source (source-description &key (mode :error))
   (let ((directory (ensure-directories-exist
                     (uiop:truenamize
-                     (format nil "cl2nix/~A/" (name source-description))))))
-    (with-open-file (f (merge-pathnames "src.nix" directory)
+                     (format nil "cl2nix/~A/" (pname source-description))))))
+    (with-open-file (f (merge-pathnames "source.json" directory)
                        :direction :output
                        :if-exists mode
                        :if-does-not-exist :create)
-      (format f "~A {
-  url = ~S;
-  sha256 = ~S;~@[~&  rev = ~S;~]
+      (format f "{
+  \"url\": ~S,
+  \"sha256\": ~S~@[,~&  \"rev\": ~S~]
 }"
-              (fetcher source-description)
               (url source-description)
               (sha256 source-description)
               (rev source-description))))

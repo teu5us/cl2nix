@@ -71,13 +71,15 @@
   (if (stringp dependency)
       dependency
       (case (first dependency)
-        (:feature
-         (if (atom (second dependency))
-             (when (uiop:featurep (second dependency))
-               (parse-specifier (third dependency)))
-             (when (member t (second dependency) :test #'eql)
-               (parse-specifier (third dependency)))))
-        (:version )
+        ;; (:feature
+        ;;  (if (atom (second dependency))
+        ;;      (when (uiop:featurep (second dependency))
+        ;;        (parse-specifier (third dependency)))
+        ;;      (when (member t (second dependency) :test #'eql)
+        ;;        (parse-specifier (third dependency)))))
+        ;; (:version )
+        ((or :feature :version)
+         (parse-specifier (car (last dependency))))
         (:require nil))))
 
 (defun system-dependencies (system)

@@ -6,7 +6,8 @@
    #:split-on
    #:ends-with
    #:in-cl2nix-dir
-   #:starts-with))
+   #:starts-with
+   #:gassoc))
 
 (in-package :cl2nix/util)
 
@@ -36,3 +37,8 @@
 (defun in-cl2nix-dir (pathname)
   (merge-pathnames pathname
                    (asdf:system-source-directory :cl2nix)))
+
+(defun gassoc (list key value)
+  (flet ((getf-1 (seq)
+           (getf seq key)))
+    (find value list :key #'getf-1 :test #'string=)))

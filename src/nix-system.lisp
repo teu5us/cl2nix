@@ -19,7 +19,10 @@
    #:asd
    #:source-root
    #:description
-   #:package-main-system))
+   #:package-main-system
+   #:nix-source-description
+   #:nix-system
+   #:describe-source-by-name))
 
 (in-package :cl2nix/nix-system)
 
@@ -150,3 +153,6 @@
           (uiop:delete-directory-tree extracted-path
                                       :validate t
                                       :if-does-not-exist :ignore))))))
+
+(defun describe-source-by-name (source-list name)
+  (describe-source (gassoc source-list :name name)))
