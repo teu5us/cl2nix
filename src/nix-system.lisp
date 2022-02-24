@@ -79,19 +79,26 @@
                   (loop :for dir :in (uiop:subdirectories path)
                         :collect (uiop:directory-files dir)))))
 
+(defun read-asd-forms-literally (asd)
+  (uiop:with-safe-io-syntax (:package *package*)
+    (handler-bind
+        ((t #'(lambda (c)
+                (declare (ignorable c))
+                (invoke-restart (find-restart 'unintern)))))
+      (uiop:read-file-forms asd))))
+
 (defun asd-system-names (asd)
-  (let ((asd-words (uiop:with-safe-io-syntax (:package *package*)
-                     (coerce
-                      (uiop:split-string
-                       (uiop:read-file-string asd)
-                       :separator '(#\Space #\Tab #\Newline))
-                      'vector))))
-    (loop :for word :across asd-words
-          :for n :from 0 :to (length asd-words)
-          :when (or (ends-with "(defsystem" word)
-                    (ends-with "(asdf:defsystem" word))
-            :collect (string-trim '(#\" #\# #\:)
-                                  (aref asd-words (1+ n))))))
+  (uiop:nest
+   (mapcar #'(lambda (form)
+               (let ((name (cadr form)))
+                 (string-downcase
+                  (if (stringp name)
+                      name
+                      (symbol-name name))))))
+   (remove-if-not #'(lambda (form)
+                      (or (eq (car form) 'defsystem)
+                          (eq (car form) 'common-lisp::defsystem)))
+                  (read-asd-forms-literally asd))))
 
 (defun asd-system (system-name asd)
   "Has to be called with CWD set to the root of the system source, see `DESCRIBE-SOURCE'."
