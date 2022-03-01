@@ -70,14 +70,17 @@
    :output :string))
 
 (defun asds (path)
-  (remove-if-not #'(lambda (str)
-                     (ends-with ".asd" str))
-                 (uiop:nest
-                  (mapcar #'namestring)
-                  (apply #'append
-                         (uiop:directory-files path))
-                  (loop :for dir :in (uiop:subdirectories path)
-                        :collect (uiop:directory-files dir)))))
+  (remove-if #'(lambda (str)
+                 (starts-with "."
+                              (car (last (split-on-slash str)))))
+             (remove-if-not #'(lambda (str)
+                                (ends-with ".asd" str))
+                            (uiop:nest
+                             (mapcar #'namestring)
+                             (apply #'append
+                                    (uiop:directory-files path))
+                             (loop :for dir :in (uiop:subdirectories path)
+                                   :collect (uiop:directory-files dir))))))
 
 (defun read-asd-forms-literally (asd)
   (uiop:with-safe-io-syntax (:package *package*)
