@@ -99,23 +99,34 @@
                       name
                       (symbol-name name))))))
    (remove-if-not #'(lambda (form)
-                      (or (eq (car form) 'defsystem)
-                          (eq (car form) 'common-lisp::defsystem)))
+                      (when (symbolp (car form))
+                        (string= (symbol-name (car form)) "DEFSYSTEM")))
                   (read-asd-forms-literally asd))))
+
+(defmacro with-isolated-source (directory &body body)
+  `(let ((bu (copy-list asdf:*central-registry*))
+         (dir (directory-namestring ,directory)))
+     (unwind-protect
+          (progn
+            (setf asdf:*central-registry*
+                  (list (format nil "~A/" dir)))
+            ,@body)
+       (setf asdf:*central-registry* bu))))
 
 (defun asd-system (system-name asd)
   "Has to be called with CWD set to the root of the system source, see `DESCRIBE-SOURCE'."
-  (let* ((system (load-system asd :name system-name)))
-    (make-instance 'nix-system
-                   :name (asdf:component-name system) ;; component-name
-                   :version (asdf:component-version system) ;; component-version
-                   :description (asdf/component:component-description system)
-                   :asd (file-namestring asd)
-                   :source-root (let* ((path (directory-namestring
-                                             (uiop:subpathp (pathname asd)
-                                                            (uiop:getcwd)))))
-                                  (if (string= path "") "." path))
-                   :dependencies (system-dependencies system))))
+  (with-isolated-source asd
+    (let* ((system (asdf:find-system system-name)))
+      (make-instance 'nix-system
+                     :name (asdf:component-name system) ;; component-name
+                     :version (asdf:component-version system) ;; component-version
+                     :description (asdf/component:component-description system)
+                     :asd (file-namestring asd)
+                     :source-root (let* ((path (directory-namestring
+                                                (uiop:subpathp (pathname asd)
+                                                               (uiop:getcwd)))))
+                                    (if (string= path "") "." path))
+                     :dependencies (system-dependencies system)))))
 
 (defun asd-systems (asd)
   (loop :for system-name :in (asd-system-names asd)
