@@ -68,13 +68,14 @@
          (warn (make-condition 'bad-system-name :source-file source-file :name name))))
      (let* (;; NB: handle defsystem-depends-on BEFORE to create the system object,
             ;; so that in case it fails, there is no incomplete object polluting the build.
-            ;; (checked-defsystem-depends-on
-            ;;  (let* ((dep-forms (parse-dependency-defs defsystem-depends-on))
-            ;;         (deps (loop :for spec :in dep-forms
-            ;;                 :when (resolve-dependency-spec nil spec)
-            ;;                 :collect :it)))
-            ;;    (load-systems* deps)
-            ;;    dep-forms))
+            (checked-defsystem-depends-on
+             (let* ((dep-forms (parse-dependency-defs defsystem-depends-on))
+                    ;; (deps (loop :for spec :in dep-forms
+                    ;;         :when (resolve-dependency-spec nil spec)
+                    ;;         :collect :it))
+                    )
+               ;; (load-systems* deps)
+               dep-forms))
             (system (or (find-system-if-being-defined name)
                         (if-let (registered (registered-system name))
                           (reset-system-class registered 'undefined-system
@@ -85,8 +86,8 @@
              (append
               (remove-plist-keys '(:defsystem-depends-on :class) options)
               ;; cache defsystem-depends-on in canonical form
-              ;; (when checked-defsystem-depends-on
-              ;;   `(:defsystem-depends-on ,checked-defsystem-depends-on))
+              (when checked-defsystem-depends-on
+                `(:defsystem-depends-on ,checked-defsystem-depends-on))
               ))
             (directory (determine-system-directory pathname)))
        ;; This works hand in hand with asdf/find-system:find-system-if-being-defined:
