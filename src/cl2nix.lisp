@@ -101,3 +101,14 @@
          (reset-system-class system class)))
      (parse-component-form nil (list* :system name :pathname directory component-options))))
   )
+
+(in-package :cl-user)
+
+(defpackage :cffi-grovel
+  (:use #:cl)
+  (:export #:grovel-file))
+
+(in-package :cffi-grovel)
+
+(defmacro grovel-file (name)
+  `(:cffi-grovel-file ,name))

@@ -146,10 +146,18 @@
 
 (defun asd-system (system-name asd)
   "Has to be called with CWD set to the root of the system source, see `DESCRIBE-SOURCE'."
-  (let* ((system (handler-bind
+  (let* ((out-of-definition-dependencies nil)
+         (system (handler-bind
                      ((asdf:load-system-definition-error
                         #'(lambda (c)
                             (declare (ignorable c))
+                            (invoke-restart (find-restart 'continue))))
+                      (asdf:missing-component
+                        #'(lambda (c)
+                            (push (string-downcase
+                                   (symbol-name
+                                    (asdf/find-component:missing-requires c)))
+                                  out-of-definition-dependencies)
                             (invoke-restart (find-restart 'continue)))))
                      (asdf:find-system system-name nil))))
     (make-instance 'nix-system
@@ -161,7 +169,8 @@
                                                (uiop:subpathp (pathname asd)
                                                               (uiop:getcwd)))))
                                    (if (string= path "") "." path))
-                    :dependencies (system-dependencies system))))
+                    :dependencies (append (system-dependencies system)
+                                          out-of-definition-dependencies))))
 
 (defun asd-systems (asd)
   (loop :for system-name :in (asd-system-names asd)
@@ -219,7 +228,8 @@
                                  :systems (systems-from-asds asds)))
             (uiop:delete-directory-tree extracted-path
                                         :validate t
-                                        :if-does-not-exist :ignore)))))))
+                                        :if-does-not-exist :ignore)
+            (asdf/system-registry:clear-registered-systems)))))))
 
 (defun describe-source-by-name (source-list name)
   (describe-source (gassoc source-list :name name)))
