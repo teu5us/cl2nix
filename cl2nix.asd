@@ -9,7 +9,7 @@ Version used: ~A" (asdf:asdf-version))
   :description "CL2NIX is a tool to assist in maintaining Common Lisp in Nix."
   :pathname "src"
   :class :package-inferred-system
-  :defsystem-depends-on ("asdf-package-system")
+  :defsystem-depends-on ("trivial-features")
   :depends-on ("cl2nix/dep"
                "cl2nix/src"
                "cl2nix/nix-prefetch"
