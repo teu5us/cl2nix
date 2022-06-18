@@ -33,7 +33,7 @@
   (inferred-system-p (find-system name)))
 
 (defun initialize-registered-systems ()
-  ;; (asdf/system-registry:clear-registered-systems)
+  (asdf/system-registry:clear-registered-systems)
   (setf *registered-systems* (copy-list (asdf:registered-systems))))
 
 (defun restore-registered-systems ()
@@ -149,15 +149,8 @@
         (declare (ignorable _))
         (when system
           (dolist (dep (system-dependencies system nil))
-            (find-system dep)))))
-    (unwind-protect
-         (remove-duplicates
-          (remove-if #'(lambda (name)
-                         (string= name "cl2nix"))
-                       (set-difference (asdf:registered-systems)
-                                       *registered-systems*))
-          :test #'string=)
-      (asdf/system-registry:clear-registered-systems))))
+            (asdf/package-inferred-system:sysdef-package-inferred-system-search dep)))))
+    (set-difference (asdf:registered-systems) *registered-systems*)))
 
 (defmacro with-isolated-source (directory &body body)
   `(let ((bu (copy-list asdf:*central-registry*))
@@ -238,14 +231,7 @@
                                   systems))))
 
 (defun systems-from-names (system-names systems)
-  (let* ((new-systems (uiop:nest
-                       (remove-if #'(lambda (system)
-                                      (or (null system)
-                                          (member (name system)
-                                                  *registered-systems*
-                                                  :test #'string=))))
-                       (loop :for system-name :in system-names
-                             :collect (asd-system system-name)))))
+  (let* ((new-systems (remove-if #'null (mapcar #'asd-system system-names))))
     (if new-systems
         (systems-from-names (collect-dependencies new-systems)
                             (remove-duplicates (append new-systems systems)
@@ -294,13 +280,19 @@
         (with-isolated-source extracted-path
           (unwind-protect
                (uiop:with-current-directory (extracted-path)
-                 (make-instance 'nix-source-description
-                                 :pname (source-name source)
-                                 :fetcher (source-fetch source)
-                                 :url (location source)
-                                 :rev (prefetch-rev prefetch-result)
-                                 :sha256 (prefetch-sha256 prefetch-result)
-                                 :systems (systems-from-asds asds)))
+                 (let ((systems (remove-if-not
+                                 #'(lambda (system)
+                                     (or (not (source-root system)) ;; package-inferred components
+                                         (starts-with (namestring extracted-path)
+                                                      (source-root system))))
+                                 (systems-from-asds asds))))
+                   (make-instance 'nix-source-description
+                                  :pname (source-name source)
+                                  :fetcher (source-fetch source)
+                                  :url (location source)
+                                  :rev (prefetch-rev prefetch-result)
+                                  :sha256 (prefetch-sha256 prefetch-result)
+                                  :systems systems)))
             (uiop:delete-directory-tree extracted-path
                                         :validate t
                                         :if-does-not-exist :ignore)
