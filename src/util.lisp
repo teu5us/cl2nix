@@ -3,11 +3,13 @@
   (:export
    #:split-on-space
    #:split-on-slash
+   #:split-on-dash
    #:split-on
    #:ends-with
    #:in-cl2nix-dir
    #:starts-with
-   #:gassoc))
+   #:gassoc
+   #:trim-end))
 
 (in-package :cl2nix/util)
 
@@ -19,6 +21,9 @@
 
 (defun split-on-slash (str)
   (split-on str #\/))
+
+(defun split-on-dash (str)
+  (split-on str #\-))
 
 (defun starts-with (start str)
   (let ((start-position (search start str :test #'string=)))
@@ -42,3 +47,10 @@
   (flet ((getf-1 (seq)
            (getf seq key)))
     (find value list :key #'getf-1 :test #'string=)))
+
+(defun trim-end (end str)
+  (multiple-value-bind (ends-with end-position)
+      (ends-with end str)
+    (if ends-with
+        (subseq str 0 end-position)
+        str)))

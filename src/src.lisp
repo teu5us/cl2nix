@@ -27,13 +27,6 @@
                          (= 0 (length str)))
                      (uiop:read-file-lines file))))
 
-(defun trim-end (end str)
-  (multiple-value-bind (ends-with end-position)
-      (ends-with end str)
-    (if ends-with
-        (subseq str 0 end-position)
-        str)))
-
 ; source definitions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-condition working-on-source (log-message)

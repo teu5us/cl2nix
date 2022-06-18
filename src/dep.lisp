@@ -2,7 +2,8 @@
   (:use #:common-lisp #:cl2nix/log #:cl2nix/util)
   (:export
    #:load-system
-   #:system-dependencies))
+   #:system-dependencies
+   #:inferred-system-p))
 
 (in-package :cl2nix/dep)
 
@@ -42,8 +43,15 @@
     (asdf/system:system nil)
     (asdf/package-inferred-system:package-inferred-system t)))
 
+(defun %inferred-system-component-p (system-name component-name)
+  (when (starts-with (format nil "~A/" system-name) component-name)
+    system-name))
+
 (defun inferred-system-component-p (system-name component-name)
-  (starts-with (format nil "~A/" system-name) component-name))
+  (let ((parent
+          (or (%inferred-system-component-p system-name component-name)
+              (%inferred-system-component-p (car (split-on-dash system-name)) component-name))))
+    parent))
 
 (defun inferred-dependencies (system depends-on)
   (uiop:nest
@@ -56,11 +64,12 @@
    (let ((depends-no-inferred (remove-if #'system-component-p depends-on))
          (inferred (apply #'append
                           (loop :for dependency :in depends-on
-                                :collect (when (system-component-p dependency)
-                                           (uiop:nest
-                                            (asdf/package-inferred-system::package-inferred-system-file-dependencies)
-                                            (format nil "~A~A.lisp" src)
-                                            (subseq dependency (1+ (length system-name)))))))))
+                                :collect (let ((parent (system-component-p dependency)))
+                                           (when parent
+                                             (uiop:nest
+                                              (asdf/package-inferred-system::package-inferred-system-file-dependencies)
+                                              (format nil "~A~A.lisp" src)
+                                              (subseq dependency (1+ (length parent))))))))))
      (inferred-dependencies system (append depends-no-inferred inferred)))))
 
 (defun normalize-version (version-string)
@@ -82,7 +91,7 @@
          (parse-specifier (car (last dependency))))
         (:require nil))))
 
-(defun system-dependencies (system)
+(defun system-dependencies (system &optional (remove-inferred t))
   (let* ((system-name (asdf:component-name system))
          (defsystem-dependencies (asdf:system-defsystem-depends-on system))
          (weak-dependencies (asdf:system-weakly-depends-on system))
@@ -95,7 +104,8 @@
      (remove-if #'(lambda (dependency-name)
                     (or (null dependency-name)
                         (internal-package-p dependency-name (asdf:implementation-type))
-                        (when (inferred-system-p system)
+                        (when (and remove-inferred
+                                   (inferred-system-p system))
                           (inferred-system-component-p system-name dependency-name)))))
      (mapcar #'parse-specifier
              (append defsystem-dependencies
