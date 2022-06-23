@@ -1,81 +1,71 @@
 (defpackage :cl2nix/database
   (:use #:common-lisp
-        #:cl2nix/nix-system
-        #:facts)
+        ;; #:cl2nix/nix-system-new
+        )
   (:export
-   #:add-package))
+   #:add-to-db
+   #:find-in-db
+   #:*udb*
+   #:rm-from-db))
 
 (in-package :cl2nix/database)
 
 (defvar *db-path*
-  #P"../database/cl2nix.sexp")
+  (merge-pathnames "database/cl2nix.sexp"
+                   (asdf:system-source-directory :cl2nix)))
 
-(defvar *transaction-count* 0)
+(defvar *udb*
+  (merge-pathnames "database/ubiquitous-cl2nix.sexp"
+                   (asdf:system-source-directory :cl2nix)))
 
-(defun transaction-count ()
-  *transaction-count*)
+;; (defvar *db* nil)
 
-(defun inc-transaction-count ()
-  (incf *transaction-count*))
+(defun find-in-db (key)
+  (ubiquitous:value key))
 
-(defmacro with-transaction* (&body body)
-  `(progn
-     (inc-transaction-count)
-     (with-transaction ,@body)))
+(defun add-to-db (key value)
+  (setf (ubiquitous:value key) value))
 
-(defun package-exists (name)
-  (facts:bound-p ((name :is-a :package))))
+(defun rm-from-db (key)
+  (ubiquitous:remvalue key))
 
-(defun collect-packages ()
-  "Collect package names from facts db."
-  (facts:collect ((?package :is-a :package))
-    (values ?package)))
+;; (defun plist-to-package (plist)
+;;   (apply #'make-instance 'nix-source-description plist))
 
-(defmethod add-package ((obj nix-source-description))
-  (let* ((name (pname obj))
-         (systems (systems obj))
-         (system-names (mapcar #'name systems)))
-    (flet ((is-internal (system)
-             (member system system-names :test #'string=)))
-      (with-transaction*
-        (add (name :is-a :package
-                   :fetcher (fetcher obj)
-                   :url (url obj)
-                   :sha256 (sha256 obj)
-                   :rev (rev obj)
-                   :systems system-names
-                   :dependencies (remove-duplicates
-                                  (remove-if #'is-internal
-                                             (apply #'append
-                                                    (mapcar #'dependencies systems)))
-                                  :test #'string=)))))))
+;; (defun write-package (stream package)
+;;   (format stream "~S~%" (to-plist package)))
 
-(defun get-package-by-name (name)
-  (facts:with ((name :is-a :package
-                     :fetcher ?fetcher
-                     :url ?url
-                     :sha256 ?sha256
-                     :rev ?rev
-                     :systems ?systems
-                     :dependencies ?dependencies))
-    (return (list :name name
-                  :fetcher ?fetcher
-                  :url ?url
-                  :sha256 ?sha256
-                  :rev ?rev
-                  :systems ?systems
-                  :dependencies ?dependencies))))
+;; (defun add-to-db (package &optional (db *db*))
+;;   (setf (gethash (pname package) db) package))
 
-(defun get-package-name-by-system (system)
-  (facts:with ((?package :is-a :package
-                         :systems ?systems))
-    (when (member system ?systems :test #'string=)
-      (return ?package))))
+;; (defun find-in-db (pname)
+;;   (unless *db*
+;;     (load-db))
+;;   (gethash pname *db*))
 
-(defun make-package-chain (package)
-  (remove-duplicates
-   (loop :for dependency :in (facts:with ((package :is-a :package
-                                                   :dependencies ?dependencies))
-                               (return ?dependencies))
-         :collect (get-package-name-by-system dependency))
-   :test #'string=))
+;; (defun %load-db ()
+;;   (let ((db (make-hash-table :test #'equal)))
+;;     (uiop:with-safe-io-syntax (:package :cl2nix)
+;;       (with-open-file (f *db-path*
+;;                          :direction :input
+;;                          :if-does-not-exist :create)
+;;         (loop :with eof = '#:eof
+;;               :for form = (read f nil eof)
+;;               :until (eq form eof)
+;;               :do (add-to-db (plist-to-package form) db))))
+;;     (setf *db* db)))
+
+;; (defun load-db ()
+;;   (if *db*
+;;       (if (y-or-n-p "Overwrite database from file?")
+;;         (%load-db)
+;;         *db*)
+;;       (%load-db)))
+
+;; (defun write-db ()
+;;   (with-open-file (f *db-path*
+;;                      :direction :output
+;;                      :if-exists :supersede
+;;                      :if-does-not-exist :create)
+;;     (loop for package being the hash-values of *db*
+;;           do (write-package f package))))

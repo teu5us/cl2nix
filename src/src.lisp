@@ -14,7 +14,8 @@
    #:assoc-source-type
    #:source-location
    #:source-desc
-   #:assoc-source-class))
+   #:assoc-source-class
+   #:unknown-source))
 
 (in-package :cl2nix/src)
 
@@ -46,6 +47,15 @@
   (:report (lambda (condition stream)
              (format stream
                      "~A Source ~S is ignored due to empty source-desc~&"
+                     (log-timestamp condition)
+                     (name condition)))))
+
+(define-condition unknown-source (log-message)
+  ((name :initarg :name
+         :reader name))
+  (:report (lambda (condition stream)
+             (format stream
+                     "~A Unknown source: ~A~&"
                      (log-timestamp condition)
                      (name condition)))))
 
@@ -131,13 +141,13 @@
 (defclass mercurial-source (source)
   ()
   (:default-initargs
-   :prefetch (in-cl2nix-dir "scripts/nix-prefetch-hg")
+   :prefetch (namestring (in-cl2nix-dir "scripts/nix-prefetch-hg"))
    :fetch "fetchhg"))
 
 (defclass svn-source (source)
   ()
   (:default-initargs
-   :prefetch (in-cl2nix-dir "scripts/nix-prefetch-svn")
+   :prefetch (namestring (in-cl2nix-dir "scripts/nix-prefetch-svn"))
    :fetch "fetchsvn"))
 
 (defclass darcs-source (source)

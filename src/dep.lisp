@@ -53,24 +53,24 @@
               (%inferred-system-component-p (car (split-on-dash system-name)) component-name))))
     parent))
 
-(defun inferred-dependencies (system depends-on)
-  (uiop:nest
-   (let ((system-name (asdf:component-name system))
-         (src (asdf:component-pathname system))))
-   (flet ((system-component-p (component)
-            (inferred-system-component-p system-name component))))
-   (if (not (member t (mapcar #'system-component-p depends-on)))
-       depends-on)
-   (let ((depends-no-inferred (remove-if #'system-component-p depends-on))
-         (inferred (apply #'append
-                          (loop :for dependency :in depends-on
-                                :collect (let ((parent (system-component-p dependency)))
-                                           (when parent
-                                             (uiop:nest
-                                              (asdf/package-inferred-system::package-inferred-system-file-dependencies)
-                                              (format nil "~A~A.lisp" src)
-                                              (subseq dependency (1+ (length parent))))))))))
-     (inferred-dependencies system (append depends-no-inferred inferred)))))
+;; (defun inferred-dependencies (system depends-on)
+;;   (uiop:nest
+;;    (let ((system-name (asdf:component-name system))
+;;          (src (asdf:component-pathname system))))
+;;    (flet ((system-component-p (component)
+;;             (inferred-system-component-p system-name component))))
+;;    (if (not (member t (mapcar #'system-component-p depends-on)))
+;;        depends-on)
+;;    (let ((depends-no-inferred (remove-if #'system-component-p depends-on))
+;;          (inferred (apply #'append
+;;                           (loop :for dependency :in depends-on
+;;                                 :collect (let ((parent (system-component-p dependency)))
+;;                                            (when parent
+;;                                              (uiop:nest
+;;                                               (asdf/package-inferred-system::package-inferred-system-file-dependencies)
+;;                                               (format nil "~A~A.lisp" src)
+;;                                               (subseq dependency (1+ (length parent))))))))))
+;;      (inferred-dependencies system (append depends-no-inferred inferred)))))
 
 (defun normalize-version (version-string)
   (format nil "_~A" (substitute #\_ #\. version-string)))
@@ -91,24 +91,23 @@
          (parse-specifier (car (last dependency))))
         (:require nil))))
 
-(defun system-dependencies (system &optional (remove-inferred t))
-  (let* ((system-name (asdf:component-name system))
-         (defsystem-dependencies (asdf:system-defsystem-depends-on system))
-         (weak-dependencies (asdf:system-weakly-depends-on system))
-         (direct-dependencies (asdf:system-depends-on system))
-         (inferred-dependencies (when (inferred-system-p system)
-                                  (inferred-dependencies system
-                                                         direct-dependencies))))
-    (uiop:nest
-     (dedup-append #'string-equal)
-     (remove-if #'(lambda (dependency-name)
-                    (or (null dependency-name)
-                        (internal-package-p dependency-name (asdf:implementation-type))
-                        (when (and remove-inferred
-                                   (inferred-system-p system))
-                          (inferred-system-component-p system-name dependency-name)))))
-     (mapcar #'parse-specifier
-             (append defsystem-dependencies
-                     weak-dependencies
-                     direct-dependencies
-                     inferred-dependencies)))))
+;; (defun system-dependencies (system)
+;;   (let* (;; defsystem dependencies are handled separately by reader
+;;          ;; (defsystem-dependencies (asdf:system-defsystem-depends-on system))
+;;          (weak-dependencies (asdf:system-weakly-depends-on system))
+;;          (direct-dependencies (asdf:system-depends-on system))
+;;          ;; (inferred-dependencies (when (inferred-system-p system)
+;;          ;;                          (inferred-dependencies system
+;;          ;;                                                 direct-dependencies)))
+;;          )
+;;     (uiop:nest
+;;      (dedup-append #'string-equal)
+;;      (remove-if #'(lambda (dependency-name)
+;;                     (or (null dependency-name)
+;;                         (internal-package-p dependency-name (asdf:implementation-type)))))
+;;      (mapcar #'parse-specifier
+;;              (append ;; defsystem-dependencies
+;;                      weak-dependencies
+;;                      direct-dependencies
+;;                      ;; inferred-dependencies
+;;                      )))))

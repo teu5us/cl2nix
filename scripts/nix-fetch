@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+nix eval --impure --raw --expr "with import <nixpkgs> {}; $1 { url = \"$2\"; rev = \"$3\"; sha256 = \"$4\"; }"

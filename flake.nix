@@ -8,7 +8,7 @@
       {
         devShell = pkgs.mkShell {
           LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [ sqlite.out ];
-          buildInputs = with pkgs; [ sbcl sqlite.out ];
+          buildInputs = with pkgs; [ sbcl sqlite.out mercurial darcs subversion ];
         };
       }
     );

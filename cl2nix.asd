@@ -10,13 +10,14 @@ Version used: ~A" (asdf:asdf-version))
   :pathname "src"
   :class :package-inferred-system
   :defsystem-depends-on ("trivial-features")
-  :depends-on ("cl2nix/dep"
+  :depends-on ("ubiquitous"
+               "cl2nix/dep"
                "cl2nix/src"
                "cl2nix/nix-prefetch"
                "cl2nix/util"
-               "cl2nix/nix-system"
+               "cl2nix/database"
+               "cl2nix/nix-system-new"
                "cl2nix/source-list"
-               "cl2nix/dump-nix-system"
-               "cl2nix/log"
-               "cl2nix/database")
+               "cl2nix/write-nix"
+               "cl2nix/log")
   :components ((:file "cl2nix")))

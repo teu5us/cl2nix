@@ -6,7 +6,9 @@
    #:prefetch-rev
    #:prefetch-sha256
    #:prefetch-path
-   #:*failed-prefetch*))
+   #:*failed-prefetch*
+   #:prefetch-failed
+   #:run-nix-prefetch))
 
 (in-package :cl2nix/nix-prefetch)
 

@@ -40,6 +40,21 @@
   (dolist (system-name *registered-systems*)
     (asdf:register-preloaded-system system-name)))
 
+(defun copy-hash-table (ht)
+  (loop for k being the hash-keys of ht using (hash-value v)
+        with new-ht = (make-hash-table :test (hash-table-test ht))
+        do (setf (gethash k new-ht) v)
+        finally (return new-ht)))
+
+(defmacro with-cleared-sources ((source-names) &body forms)
+  `(let ((old-source-registry (copy-hash-table asdf/source-registry:*source-registry*)))
+     (unwind-protect
+          (progn
+            (dolist (source-name ',source-names)
+              (remhash source-name asdf/source-registry:*source-registry*))
+            ,@forms)
+       (setf asdf/source-registry:*source-registry* old-source-registry))))
+
 (define-condition dependency-missing (log-message)
   ((system-name :initarg :system-name
                 :reader system-name)
@@ -117,18 +132,92 @@
   (declare (ignorable ign1 ign2))
   (funcall (get-macro-character #\') stream nil))
 
+(defvar *packages-to-remove* nil)
+
+(defun define-missing (package-error)
+  (destructuring-bind (package . sym)
+      (reverse (simple-condition-format-arguments package-error))
+    (if sym
+	(let ((symbol-name (car sym)))
+	  `(progn
+	     (intern ,symbol-name ,package)
+	     (export (find-symbol ,symbol-name ,package) ,package)))
+    `(progn
+       (defpackage ,package)
+       (push ,package *packages-to-remove*)))))
+
+(defun %read* (&optional
+                 (stream *standard-input*)
+                 (eof-error-p t)
+                 eof-value
+                 recursive-p
+                 out-of-definition-dependencies)
+  (restart-case
+      (values
+       (read stream eof-error-p eof-value recursive-p)
+       out-of-definition-dependencies)
+    (define-missing (c)
+      (eval (define-missing c)))
+    (record-package (c)
+      (push (string-downcase
+             (symbol-name
+              (asdf/find-component:missing-requires c)))
+            out-of-definition-dependencies))))
+
+(defun read* (&optional
+                (stream *standard-input*)
+                (eof-error-p t)
+                eof-value
+                recursive-p)
+  (let (out-of-definition-dependencies)
+    (handler-bind
+        ((package-error
+           #'(lambda (c)
+               (let ((restart (find-restart 'define-missing)))
+                 (when restart
+                   (invoke-restart restart c)))))
+         (asdf/find-component:missing-component
+           #'(lambda (c)
+               (let ((restart (find-restart 'record-package)))
+                 (when restart
+                   (invoke-restart restart c))))))
+      (%read* stream eof-error-p eof-value recursive-p out-of-definition-dependencies))))
+
 (defun %read-asd-forms-literally (asd)
   (uiop:with-safe-io-syntax ()
     (let* ((*readtable* (copy-readtable nil)))
       (set-dispatch-macro-character #\# #\. #'sharp-dot-quote)
-      (uiop:read-file-forms asd))))
+      (restart-case
+          (uiop:read-file-forms asd)
+        (define-missing (c)
+          (eval
+           (define-missing c)))))))
 
 (defun read-asd-forms-literally (asd)
-  (handler-bind
-      ((t #'(lambda (c)
-              (declare (ignorable c))
-              (invoke-restart (find-restart 'unintern)))))
-    (%read-asd-forms-literally asd)))
+  (let ((*package* (find-package :asdf-user)))
+    (handler-bind
+        ((t #'(lambda (c)
+                (declare (ignorable c))
+                (let ((restart (find-restart 'define-missing)))
+                  (when restart
+                    (invoke-restart restart c)
+                    (read-asd-forms-literally asd))))))
+      (%read-asd-forms-literally asd))))
+
+(defun %read-asd-forms (asd)
+  (let* ((*readtable* (copy-readtable nil)))
+    ;; (set-dispatch-macro-character #\# #\. #'sharp-dot-quote)
+    (with-open-file (f asd)
+      (loop :with result :with eof = '#:eof
+            :for form = (read* f nil eof)
+            :until (eq form eof)
+            :when (not (member (car form) '(defun defmethod)))
+              :do (push (eval form) result)
+            :finally (return result)))))
+
+(defun read-asd-forms (asd)
+  (let ((*package* (find-package :asdf-user)))
+    (%read-asd-forms asd)))
 
 (defun primary-first (asd names)
   (let ((asd-name (trim-end ".asd" (pathname-name asd))))
@@ -158,7 +247,8 @@
      (unwind-protect
           (progn
             (setf asdf:*central-registry*
-                  (asds-paths dir))
+                  (remove-duplicates (asds-paths dir)
+                                     :test #'string=))
             ,@body)
        (setf asdf:*central-registry* bu))))
 
@@ -175,17 +265,22 @@
           (symbol-function 'asdf/find-component:resolve-dependency-spec)))
     (list
      (handler-bind
-         ((asdf:load-system-definition-error
+         (
+          (sb-int:simple-reader-package-error
             #'(lambda (c)
-                (declare (ignorable c))
-                (invoke-restart (find-restart 'continue))))
+                c))
+          ;; (asdf:load-system-definition-error
+          ;;   #'(lambda (c)
+          ;;       (declare (ignorable c))
+          ;;       (invoke-restart (find-restart 'continue))))
           (asdf:missing-component
             #'(lambda (c)
                 (push (string-downcase
                        (symbol-name
                         (asdf/find-component:missing-requires c)))
                       out-of-definition-dependencies)
-                (invoke-restart (find-restart 'continue)))))
+                (invoke-restart (find-restart 'continue))))
+          )
        (setf ;; override asdf:load-systems*
         (symbol-function 'asdf:load-systems*) #'return-nil)
        (setf ;; override asdf/find-component:resolve-dependency-spec

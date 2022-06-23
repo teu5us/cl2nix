@@ -8,7 +8,8 @@
    #:log-opened
    #:log-closed
    #:close-log
-   #:open-log))
+   #:open-log
+   #:with-log-file))
 
 (in-package :cl2nix/log)
 
@@ -41,6 +42,12 @@
   (unless (equal *log* *error-output*)
     (close *log*)
     (setf *log* *error-output*)))
+
+(defmacro with-log-file (file &body forms)
+  `(prog2
+     (open-log ,file)
+     ,@forms
+     (close-log)))
 
 (defun to-log (condition-class &rest args)
   (let ((*print-escape* nil))
